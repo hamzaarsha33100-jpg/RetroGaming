@@ -1,4 +1,4 @@
-import ImageKit from "imagekit-javascript";
+import ImageKit from "@imagekit/javascript";
 
 const imagekit = new ImageKit({
   publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,

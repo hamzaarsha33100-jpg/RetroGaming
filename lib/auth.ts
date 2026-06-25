@@ -12,7 +12,7 @@ const clientPromise = client.connect();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: MongoDBAdapter(clientPromise, {
-    databaseName: "retro-gaming",
+    databaseName: "retrogaming",
   }),
   providers: [
     GoogleProvider({

@@ -116,15 +116,32 @@ SMTP_FROM=noreply@retrogaming.com
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-4. **Run development server**
+4. **Create admin user**
+```bash
+npm run create-admin
+```
+
+This will create an admin account with:
+- **Email**: `admin@retrogaming.com`
+- **Password**: `Admin@123456`
+
+⚠️ **Important**: Change password after first login!
+
+5. **Run development server**
 ```bash
 npm run dev
 ```
 
-5. **Open in browser**
+6. **Open in browser**
 ```
 http://localhost:3000
 ```
+
+7. **Access Admin Panel**
+```
+http://localhost:3000/admin
+```
+Login with admin credentials created in step 4.
 
 ---
 

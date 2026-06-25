@@ -1,0 +1,16 @@
+{
+  "name": "Admin User",
+  "email": "admin@retrogaming.com",
+  "password": "$2a$12$LKxZ8vJZ9qWZJ0yJZ8vJZuH7L0kJ9qWZJ0yJZ8vJZuH7L0kJ9qWZJ",
+  "role": "admin",
+  "provider": "credentials",
+  "isActive": true,
+  "addresses": [],
+  "wishlist": [],
+  "createdAt": {
+    "$date": "2026-06-25T10:00:00.000Z"
+  },
+  "updatedAt": {
+    "$date": "2026-06-25T10:00:00.000Z"
+  }
+}

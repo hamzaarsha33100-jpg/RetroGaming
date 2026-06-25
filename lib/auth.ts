@@ -3,9 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import { MongoClient } from "mongodb";
-import bcrypt from "bcryptjs";
-import connectDB from "./mongodb";
-import User from "@/models/User";
+import type { Adapter } from "next-auth/adapters";
 
 const client = new MongoClient(process.env.MONGODB_URI!);
 const clientPromise = client.connect();
@@ -13,7 +11,7 @@ const clientPromise = client.connect();
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: MongoDBAdapter(clientPromise, {
     databaseName: "retrogaming",
-  }),
+  }) as Adapter,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -29,6 +27,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
+
+        // Import mongoose models only in Node.js runtime
+        const bcrypt = await import("bcryptjs");
+        const { default: connectDB } = await import("./mongodb");
+        const { default: User } = await import("@/models/User");
 
         await connectDB();
 
@@ -61,20 +64,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "customer";
         token.isActive = (user as { isActive?: boolean }).isActive ?? true;
       }
 
-      if (account?.provider === "google") {
-        await connectDB();
-        const dbUser = await User.findOne({ email: token.email });
-        if (dbUser) {
-          token.id = dbUser._id.toString();
-          token.role = dbUser.role;
-          token.isActive = dbUser.isActive;
+      // Only run DB queries during sign in, not on every request
+      if (account?.provider === "google" || trigger === "signIn") {
+        if (account?.provider === "google") {
+          const { default: connectDB } = await import("./mongodb");
+          const { default: User } = await import("@/models/User");
+          
+          await connectDB();
+          const dbUser = await User.findOne({ email: token.email });
+          if (dbUser) {
+            token.id = dbUser._id.toString();
+            token.role = dbUser.role;
+            token.isActive = dbUser.isActive;
+          }
         }
       }
 
@@ -90,6 +99,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async signIn({ user, account }) {
       if (account?.provider === "google") {
+        const { default: connectDB } = await import("./mongodb");
+        const { default: User } = await import("@/models/User");
+        
         await connectDB();
         const existingUser = await User.findOne({ email: user.email });
         if (!existingUser) {

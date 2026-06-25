@@ -37,3 +37,6 @@ export default auth((req: NextRequest & { auth: { user?: { role?: string; isActi
 export const config = {
   matcher: ["/admin/:path*", "/account/:path*", "/checkout/:path*"],
 };
+
+// Force middleware to use Node.js runtime instead of Edge
+export const runtime = 'nodejs';

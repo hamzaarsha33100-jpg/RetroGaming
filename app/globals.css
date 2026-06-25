@@ -1,0 +1,182 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 4%;
+    --foreground: 240 5% 90%;
+    --card: 240 10% 7%;
+    --card-foreground: 240 5% 90%;
+    --popover: 240 10% 7%;
+    --popover-foreground: 240 5% 90%;
+    --primary: 180 100% 50%;
+    --primary-foreground: 240 10% 4%;
+    --secondary: 240 10% 12%;
+    --secondary-foreground: 240 5% 90%;
+    --muted: 240 10% 12%;
+    --muted-foreground: 240 5% 55%;
+    --accent: 270 50% 50%;
+    --accent-foreground: 240 5% 90%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 15% 15%;
+    --input: 240 15% 12%;
+    --ring: 180 100% 50%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-gaming-dark text-gaming-text font-body antialiased;
+    background-color: #0a0a0f;
+    background-image: 
+      radial-gradient(ellipse at 20% 50%, rgba(0, 255, 245, 0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(155, 89, 182, 0.03) 0%, transparent 50%);
+  }
+
+  ::selection {
+    background: rgba(0, 255, 245, 0.3);
+    color: #e0e0ff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0a0a0f;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #1e1e3f;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #00fff5;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+
+  .glass-dark {
+    @apply bg-black/20 backdrop-blur-md border border-white/5;
+  }
+
+  .neon-text {
+    text-shadow: 0 0 7px #00fff5, 0 0 10px #00fff5, 0 0 21px #00fff5;
+  }
+
+  .neon-text-purple {
+    text-shadow: 0 0 7px #9b59b6, 0 0 10px #9b59b6, 0 0 21px #9b59b6;
+  }
+
+  .neon-border {
+    box-shadow: 0 0 5px #00fff5, 0 0 10px #00fff5, inset 0 0 5px rgba(0, 255, 245, 0.1);
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-neon-cyan via-accent to-neon-pink;
+  }
+
+  .gaming-card {
+    @apply bg-gaming-surface border border-gaming-border rounded-lg overflow-hidden transition-all duration-300;
+  }
+
+  .gaming-card:hover {
+    @apply border-neon-cyan/30;
+    box-shadow: 0 4px 20px rgba(0, 255, 245, 0.1);
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-neon-cyan to-accent text-gaming-dark font-semibold px-6 py-3 rounded-lg
+           transition-all duration-300 hover:scale-105 hover:shadow-neon;
+  }
+
+  .btn-secondary {
+    @apply border border-neon-cyan/50 text-neon-cyan px-6 py-3 rounded-lg
+           transition-all duration-300 hover:bg-neon-cyan/10 hover:border-neon-cyan;
+  }
+
+  .btn-ghost {
+    @apply text-gaming-text px-6 py-3 rounded-lg transition-all duration-300
+           hover:bg-white/5 hover:text-neon-cyan;
+  }
+
+  .input-gaming {
+    @apply bg-gaming-surface border border-gaming-border text-gaming-text placeholder-gaming-textMuted
+           rounded-lg px-4 py-3 focus:outline-none focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan/30
+           transition-all duration-300;
+  }
+
+  .badge-gaming {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-gaming font-bold text-white;
+  }
+
+  .section-subtitle {
+    @apply text-gaming-textMuted text-lg;
+  }
+
+  .shimmer {
+    @apply relative overflow-hidden;
+  }
+
+  .shimmer::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  .sticky-nav {
+    @apply fixed top-0 left-0 right-0 z-50 transition-all duration-300;
+  }
+
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #00fff5, #9b59b6, #ff006e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .border-gradient {
+    border: 1px solid transparent;
+    background: linear-gradient(#0f0f1a, #0f0f1a) padding-box,
+                linear-gradient(135deg, #00fff5, #9b59b6) border-box;
+  }
+
+  .mask-fade-out {
+    -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  }
+}

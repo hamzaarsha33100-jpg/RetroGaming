@@ -1,0 +1,117 @@
+import { NextRequest, NextResponse } from "next/server";
+import dbConnect from "@/lib/db";
+import Category from "@/models/Category";
+import { auth } from "@/lib/auth";
+
+// GET /api/categories/[id]
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await dbConnect();
+
+    const category = await Category.findById(params.id);
+
+    if (!category) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(category);
+  } catch (error) {
+    console.error("Error fetching category:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch category" },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/categories/[id] - Update category (admin only)
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await dbConnect();
+
+    const body = await request.json();
+    const { name, description, image, isActive } = body;
+
+    // Generate slug from name if name is being updated
+    const slug = name
+      ? name
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, "")
+          .replace(/\s+/g, "-")
+      : undefined;
+
+    const category = await Category.findByIdAndUpdate(
+      params.id,
+      {
+        ...(name && { name, slug }),
+        ...(description !== undefined && { description }),
+        ...(image !== undefined && { image }),
+        ...(isActive !== undefined && { isActive }),
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!category) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(category);
+  } catch (error) {
+    console.error("Error updating category:", error);
+    return NextResponse.json(
+      { error: "Failed to update category" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/categories/[id] - Delete category (admin only)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await auth();
+
+    if (!session || session.user.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await dbConnect();
+
+    const category = await Category.findByIdAndDelete(params.id);
+
+    if (!category) {
+      return NextResponse.json(
+        { error: "Category not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ message: "Category deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    return NextResponse.json(
+      { error: "Failed to delete category" },
+      { status: 500 }
+    );
+  }
+}

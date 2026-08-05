@@ -193,6 +193,51 @@ const emailTemplates = {
     </html>
   `,
 
+  otpVerification: (data: { name: string; otp: string }) => `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+        .otp-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border: 2px dashed #0077b6; }
+        .otp-code { font-size: 36px; font-weight: bold; color: #0077b6; letter-spacing: 8px; margin: 10px 0; }
+        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; font-size: 14px; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🔑 Password Reset Code</h1>
+          <p>Use this code to verify your identity</p>
+        </div>
+        <div class="content">
+          <p>Hi ${data.name},</p>
+          <p>You requested a password reset. Use the verification code below:</p>
+          
+          <div class="otp-box">
+            <p style="margin: 0; color: #666; font-size: 14px;">Your verification code:</p>
+            <div class="otp-code">${data.otp}</div>
+            <p style="margin: 0; color: #999; font-size: 12px;">Expires in 10 minutes</p>
+          </div>
+
+          <div class="warning">
+            <strong>⚠️ Security Notice:</strong><br>
+            If you didn't request this code, please ignore this email. Never share this code with anyone.
+          </div>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} Retro Gaming. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `,
+
   welcomeEmail: (data: { name: string; email: string }) => `
     <!DOCTYPE html>
     <html>
@@ -314,6 +359,25 @@ export async function sendPasswordResetEmail(data: {
     console.log("Password reset email sent to:", data.to);
   } catch (error) {
     console.error("Error sending password reset email:", error);
+    throw error;
+  }
+}
+
+export async function sendOtpEmail(data: {
+  to: string;
+  name: string;
+  otp: string;
+}) {
+  try {
+    await transporter.sendMail({
+      from: `"Retro Gaming" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+      to: data.to,
+      subject: "Your Password Reset Code",
+      html: emailTemplates.otpVerification(data),
+    });
+    console.log("OTP email sent to:", data.to);
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
     throw error;
   }
 }

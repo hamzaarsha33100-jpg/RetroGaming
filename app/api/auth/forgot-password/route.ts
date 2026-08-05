@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import User from "@/models/User";
-import crypto from "crypto";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { sendOtpEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+
+function generateOtp(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 export async function POST(request: NextRequest) {
   const rateLimitResult = rateLimit(request, 5, 15 * 60 * 1000);
@@ -22,41 +25,35 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+otp +otpExpires");
 
     if (!user) {
       return NextResponse.json({
-        message: "If account exists, reset email will be sent",
+        message: "If account exists, a verification code will be sent",
       });
     }
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetTokenHash = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
+    const otp = generateOtp();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    user.resetPasswordToken = resetTokenHash;
-    user.resetPasswordExpires = new Date(Date.now() + 3600000);
+    user.otp = otp;
+    user.otpExpires = otpExpires;
+    user.otpVerified = false;
     await user.save();
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
-
     if (process.env.SMTP_USER) {
-      await sendPasswordResetEmail({
+      await sendOtpEmail({
         to: user.email,
         name: user.name,
-        resetUrl,
+        otp,
       });
     } else {
-      console.log("Password reset requested for:", email);
-      if (process.env.NODE_ENV !== "production") {
-        console.log("Reset URL:", resetUrl);
-      }
+      console.log("OTP for", email, ":", otp);
     }
 
     return NextResponse.json({
-      message: "If account exists, reset email will be sent",
+      message: "If account exists, a verification code will be sent",
+      ...(process.env.NODE_ENV !== "production" && { otp }),
     });
   } catch (error) {
     console.error("Error processing password reset:", error);

@@ -11,8 +11,11 @@ export interface IUser extends Document {
   phone?: string;
   addresses: IAddress[];
   wishlist: mongoose.Types.ObjectId[];
-  resetPasswordToken?: string;
-  resetPasswordExpires?: Date;
+    resetPasswordToken?: string;
+    resetPasswordExpires?: Date;
+    otp?: string;
+    otpExpires?: Date;
+    otpVerified?: boolean;
   emailVerified?: Date;
   isActive: boolean;
   createdAt: Date;
@@ -79,6 +82,9 @@ const UserSchema = new Schema<IUser>(
     wishlist: [{ type: Schema.Types.ObjectId, ref: "Product" }],
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    otp: { type: String, select: false },
+    otpExpires: { type: Date, select: false },
+    otpVerified: { type: Boolean, default: false },
     emailVerified: Date,
     isActive: { type: Boolean, default: true },
   },

@@ -18,25 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { X, SlidersHorizontal, Grid3x3, Rows3 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-
-interface Product {
-  _id: string;
-  name: string;
-  slug: string;
-  price: number;
-  salePrice?: number;
-  mainImage: string;
-  brand: string;
-  category: {
-    _id: string;
-    name: string;
-  };
-  isFeatured: boolean;
-  isTrending: boolean;
-  isNewArrival: boolean;
-  isBestSeller: boolean;
-  stockQuantity: number;
-}
+import { ProductCardData } from "@/types";
 
 interface Category {
   _id: string;
@@ -73,12 +55,13 @@ export default function ProductsClient() {
     queryFn: async () => {
       const res = await fetch("/api/categories");
       if (!res.ok) throw new Error("Failed to fetch categories");
-      return res.json();
+      const json = await res.json();
+      return json.data ?? [];
     },
   });
 
   // Fetch products with filters
-  const { data: products = [], isLoading } = useQuery<Product[]>({
+  const { data: products = [], isLoading } = useQuery<ProductCardData[]>({
     queryKey: [
       "products",
       selectedCategory,
@@ -101,7 +84,8 @@ export default function ProductsClient() {
 
       const res = await fetch(`/api/products?${params}`);
       if (!res.ok) throw new Error("Failed to fetch products");
-      return res.json();
+      const json = await res.json();
+      return json.data ?? [];
     },
   });
 
@@ -319,7 +303,7 @@ export default function ProductsClient() {
 
             {/* Sort */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[200px] bg-slate-900/50 border-purple-500/20">
+              <SelectTrigger className="w-full sm:w-[200px] bg-slate-900/50 border-purple-500/20">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-purple-500/20">

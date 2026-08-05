@@ -1,10 +1,21 @@
+import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
-import bcrypt from "bcryptjs";
 
-export async function POST() {
+function canRunAdminSetup(req: NextRequest) {
+  const setupSecret = process.env.SETUP_ADMIN_TOKEN;
+  return Boolean(
+    setupSecret && req.headers.get("x-setup-admin-token") === setupSecret
+  );
+}
+
+export async function POST(req: NextRequest) {
   try {
+    if (!canRunAdminSetup(req)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     await connectDB();
 
     // Find admin user
@@ -17,18 +28,14 @@ export async function POST() {
       );
     }
 
-    // Generate new password hash
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash("Admin@123456", salt);
-
     // Update password
-    admin.password = hashedPassword;
+    admin.password = "Admin@123456";
     await admin.save();
 
     return NextResponse.json({
       success: true,
       message: "Admin password updated successfully!",
-      credentials: {
+      credentials: process.env.NODE_ENV === "production" ? undefined : {
         email: "admin@retrogaming.com",
         password: "Admin@123456"
       }

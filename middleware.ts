@@ -1,34 +1,25 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { authConfig } from "@/lib/auth.config";
 
-export default auth((req: NextRequest & { auth: { user?: { role?: string; isActive?: boolean } } | null }) => {
-  const { pathname } = req.nextUrl;
+const { auth } = NextAuth(authConfig);
 
-  // Protect admin routes
-  if (pathname.startsWith("/admin")) {
-    const session = req.auth;
-    if (!session?.user) {
-      const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    if (session.user.role !== "admin") {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-    if (session.user.isActive === false) {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
+export default auth((req) => {
+  const { pathname, search } = req.nextUrl;
+  const session = req.auth;
+
+  if (!session?.user) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", `${pathname}${search}`);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // Protect account routes
-  if (pathname.startsWith("/account") || pathname.startsWith("/checkout")) {
-    const session = req.auth;
-    if (!session?.user) {
-      const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  if (session.user.isActive === false) {
+    return NextResponse.redirect(new URL("/login", req.url));
+  }
+
+  if (pathname.startsWith("/admin") && session.user.role !== "admin") {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
   return NextResponse.next();
@@ -38,5 +29,4 @@ export const config = {
   matcher: ["/admin/:path*", "/account/:path*", "/checkout/:path*"],
 };
 
-// Force middleware to use Node.js runtime instead of Edge
-export const runtime = 'nodejs';
+export const runtime = "nodejs";

@@ -6,9 +6,10 @@ import { auth } from "@/lib/auth";
 // PUT /api/admin/banners/[id] - Update banner (admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session || session.user.role !== "admin") {
@@ -19,11 +20,10 @@ export async function PUT(
 
     const body = await request.json();
 
-    const banner = await Banner.findByIdAndUpdate(
-      params.id,
-      body,
-      { new: true, runValidators: true }
-    );
+    const banner = await Banner.findByIdAndUpdate(id, body, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!banner) {
       return NextResponse.json({ error: "Banner not found" }, { status: 404 });
@@ -32,19 +32,17 @@ export async function PUT(
     return NextResponse.json(banner);
   } catch (error) {
     console.error("Error updating banner:", error);
-    return NextResponse.json(
-      { error: "Failed to update banner" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update banner" }, { status: 500 });
   }
 }
 
 // DELETE /api/admin/banners/[id] - Delete banner (admin only)
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session || session.user.role !== "admin") {
@@ -53,7 +51,7 @@ export async function DELETE(
 
     await dbConnect();
 
-    const banner = await Banner.findByIdAndDelete(params.id);
+    const banner = await Banner.findByIdAndDelete(id);
 
     if (!banner) {
       return NextResponse.json({ error: "Banner not found" }, { status: 404 });
@@ -62,9 +60,6 @@ export async function DELETE(
     return NextResponse.json({ message: "Banner deleted successfully" });
   } catch (error) {
     console.error("Error deleting banner:", error);
-    return NextResponse.json(
-      { error: "Failed to delete banner" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to delete banner" }, { status: 500 });
   }
 }

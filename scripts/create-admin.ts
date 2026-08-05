@@ -1,8 +1,27 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
 
-// Get MongoDB URI from environment (with database name)
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://hamzaarshad33100_db_user:FPIZX9BQSnx1xuR4@cluster0.g7m4jgl.mongodb.net/retrogaming?retryWrites=true&w=majority";
+// Load .env.local manually
+function loadEnv() {
+  const envPath = path.join(process.cwd(), ".env.local");
+  if (!fs.existsSync(envPath)) return;
+  const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const i = trimmed.indexOf("=");
+    if (i === -1) continue;
+    const key = trimmed.slice(0, i).trim();
+    const value = trimmed.slice(i + 1).trim();
+    process.env[key] ??= value;
+  }
+}
+
+loadEnv();
+
+const MONGODB_URI = process.env.MONGODB_URI!;
 
 async function createAdmin() {
   try {

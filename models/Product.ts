@@ -4,6 +4,7 @@ export type ImageTransition = "fade" | "slide" | "zoom" | "flip";
 
 export interface IProductImage {
   url: string;
+  fileId?: string;
   alt?: string;
   isPrimary?: boolean;
 }
@@ -28,6 +29,7 @@ export interface IProduct extends Document {
   specifications: IProductSpecification[];
   tags: string[];
   mainImage: string;
+  mainImageFileId?: string;
   galleryImages: IProductImage[];
   bannerImage?: string;
   imageTransition: ImageTransition;
@@ -54,6 +56,7 @@ export interface IProduct extends Document {
 
 const ProductImageSchema = new Schema<IProductImage>({
   url: { type: String, required: true },
+  fileId: String,
   alt: String,
   isPrimary: { type: Boolean, default: false },
 });
@@ -89,6 +92,7 @@ const ProductSchema = new Schema<IProduct>(
     specifications: [ProductSpecificationSchema],
     tags: [{ type: String, trim: true, lowercase: true }],
     mainImage: { type: String, required: true },
+    mainImageFileId: String,
     galleryImages: [ProductImageSchema],
     bannerImage: String,
     imageTransition: {
@@ -128,7 +132,6 @@ ProductSchema.pre("save", function (next) {
   next();
 });
 
-ProductSchema.index({ slug: 1 });
 ProductSchema.index({ category: 1, isActive: 1 });
 ProductSchema.index({ isFeatured: 1, isActive: 1 });
 ProductSchema.index({ isTrending: 1, isActive: 1 });

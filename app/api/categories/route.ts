@@ -2,11 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Category from "@/models/Category";
 import { auth } from "@/lib/auth";
+import { slugify } from "@/lib/utils";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const admin = searchParams.get("admin") === "true";
+
+    if (admin) {
+      const session = await auth();
+      if (!session || session.user.role !== "admin") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
     await connectDB();
-    const categories = await Category.find({ isActive: true })
+    const query = admin ? {} : { isActive: true };
+    const categories = await Category.find(query)
       .sort({ sortOrder: 1, name: 1 })
       .lean();
 
@@ -28,7 +40,13 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
     const body = await req.json();
-    const category = await Category.create(body);
+
+    if (!body.name?.trim()) {
+      return NextResponse.json({ error: "Category name is required" }, { status: 400 });
+    }
+
+    const slug = body.slug || slugify(body.name);
+    const category = await Category.create({ ...body, slug });
 
     return NextResponse.json(
       { success: true, data: JSON.parse(JSON.stringify(category)) },

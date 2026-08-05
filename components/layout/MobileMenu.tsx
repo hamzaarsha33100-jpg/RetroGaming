@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Home, Grid, Info, User, Package, Heart, LogOut, LogIn, UserPlus, Settings } from "lucide-react";
@@ -61,9 +62,11 @@ export default function MobileMenu() {
               <div className="p-6 border-b border-gaming-border">
                 <div className="flex items-center gap-3">
                   {session.user?.image ? (
-                    <img
+                    <Image
                       src={session.user.image}
                       alt={session.user.name || "User"}
+                      width={48}
+                      height={48}
                       className="w-12 h-12 rounded-full border border-neon-cyan/30"
                     />
                   ) : (
@@ -120,7 +123,7 @@ export default function MobileMenu() {
                       </Link>
                     )}
                     <Link
-                      href="/profile"
+                      href="/account"
                       onClick={closeMobileMenu}
                       className="flex items-center gap-3 px-4 py-3 rounded-lg text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-all duration-200"
                     >
@@ -128,7 +131,7 @@ export default function MobileMenu() {
                       My Profile
                     </Link>
                     <Link
-                      href="/orders"
+                      href="/account/orders"
                       onClick={closeMobileMenu}
                       className="flex items-center gap-3 px-4 py-3 rounded-lg text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-all duration-200"
                     >
@@ -136,7 +139,7 @@ export default function MobileMenu() {
                       My Orders
                     </Link>
                     <Link
-                      href="/wishlist"
+                      href="/account/wishlist"
                       onClick={closeMobileMenu}
                       className="flex items-center gap-3 px-4 py-3 rounded-lg text-gaming-textMuted hover:text-neon-pink hover:bg-white/5 transition-all duration-200"
                     >

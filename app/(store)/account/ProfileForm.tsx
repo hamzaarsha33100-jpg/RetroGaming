@@ -9,12 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2 } from "lucide-react";
+import { ImageIcon, Loader2 } from "lucide-react";
 
 const profileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
+  image: z
+    .string()
+    .trim()
+    .url("Enter a valid image URL")
+    .or(z.literal(""))
+    .optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -30,11 +36,11 @@ interface ProfileFormProps {
 
 export default function ProfileForm({ user }: ProfileFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [imagePreview, setImagePreview] = useState(user?.image || "");
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -42,8 +48,11 @@ export default function ProfileForm({ user }: ProfileFormProps) {
       name: user?.name || "",
       email: user?.email || "",
       phone: user?.phone || "",
+      image: user?.image || "",
     },
   });
+
+  const imagePreview = watch("image") || user?.image || "";
 
   const onSubmit = async (data: ProfileFormData) => {
     setIsLoading(true);
@@ -62,21 +71,6 @@ export default function ProfileForm({ user }: ProfileFormProps) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Preview
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    // Upload would happen here
-    toast.info("Image upload feature coming soon!");
   };
 
   const getInitials = (name?: string | null) => {
@@ -101,26 +95,32 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                 {getInitials(user?.name)}
               </AvatarFallback>
             </Avatar>
-            <label
-              htmlFor="avatar"
-              className="absolute bottom-0 right-0 p-2 bg-purple-600 rounded-full cursor-pointer hover:bg-purple-700 transition"
-            >
-              <Camera className="w-4 h-4 text-white" />
-              <input
-                type="file"
-                id="avatar"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-            </label>
           </div>
           <div>
             <h3 className="font-semibold text-white mb-1">Profile Photo</h3>
             <p className="text-sm text-gray-400">
-              PNG, JPG or GIF (max. 2MB)
+              Use an HTTPS image URL for your avatar.
             </p>
           </div>
+        </div>
+
+        <div>
+          <Label htmlFor="image" className="text-gray-300">
+            Profile Image URL
+          </Label>
+          <div className="relative mt-1.5">
+            <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Input
+              id="image"
+              type="url"
+              {...register("image")}
+              placeholder="https://example.com/avatar.jpg"
+              className="pl-10 bg-slate-800/50 border-purple-500/20 text-white"
+            />
+          </div>
+          {errors.image && (
+            <p className="text-red-400 text-sm mt-1">{errors.image.message}</p>
+          )}
         </div>
 
         {/* Name */}

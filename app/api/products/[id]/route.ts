@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import { auth } from "@/lib/auth";
+import { deleteImageKitFile } from "@/lib/imagekit";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
-    const product = await Product.findById(params.id)
+    const product = await Product.findById(id)
       .populate("category", "name slug")
       .lean();
 
@@ -28,9 +30,10 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
     if (!session || session.user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -38,14 +41,28 @@ export async function PUT(
 
     await connectDB();
     const body = await req.json();
+    const existingProduct = await Product.findById(id).lean() as (Record<string, any> & { _id: any }) | null;
 
-    const product = await Product.findByIdAndUpdate(params.id, body, {
+    if (!existingProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    const product = await Product.findByIdAndUpdate(id, body, {
       new: true,
       runValidators: true,
     }).populate("category", "name slug");
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    if (
+      existingProduct.mainImageFileId &&
+      existingProduct.mainImageFileId !== product.mainImageFileId
+    ) {
+      deleteImageKitFile(existingProduct.mainImageFileId).catch((error) => {
+        console.error("Failed to delete replaced ImageKit file:", error);
+      });
     }
 
     return NextResponse.json({
@@ -60,19 +77,26 @@ export async function PUT(
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
     if (!session || session.user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
-    const product = await Product.findByIdAndDelete(params.id);
+    const product = await Product.findByIdAndDelete(id);
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    if (product.mainImageFileId) {
+      deleteImageKitFile(product.mainImageFileId).catch((error) => {
+        console.error("Failed to delete product ImageKit file:", error);
+      });
     }
 
     return NextResponse.json({ success: true, message: "Product deleted" });

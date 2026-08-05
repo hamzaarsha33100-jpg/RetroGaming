@@ -39,7 +39,6 @@ const PageSchema = new Schema<IPage>(
   { timestamps: true }
 );
 
-PageSchema.index({ slug: 1 });
 PageSchema.index({ isActive: 1 });
 
 const Page =

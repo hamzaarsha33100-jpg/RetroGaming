@@ -10,12 +10,13 @@ export const metadata: Metadata = {
 };
 
 interface OrderPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function OrderDetailPage({ params }: OrderPageProps) {
+  const { id } = await params;
   const session = await auth();
 
   if (!session?.user) {
@@ -25,7 +26,7 @@ export default async function OrderDetailPage({ params }: OrderPageProps) {
   await dbConnect();
 
   const order = await Order.findOne({
-    _id: params.id,
+    _id: id,
     user: session.user.id,
   }).lean();
 

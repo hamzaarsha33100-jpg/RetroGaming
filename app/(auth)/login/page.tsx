@@ -16,6 +16,8 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+const googleAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true";
+
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
@@ -79,7 +81,9 @@ export default function LoginPage() {
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-md"
     >
-      <div className="gaming-card p-8">
+      <div className="relative overflow-hidden rounded-2xl border border-neon-cyan/20 bg-gaming-surface/90 p-6 shadow-2xl shadow-neon-cyan/5 backdrop-blur-xl sm:p-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-neon-cyan via-accent to-neon-pink" />
+        <div className="pointer-events-none absolute right-6 top-6 h-20 w-20 rounded-full border border-neon-cyan/10 bg-neon-cyan/5 blur-2xl" />
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-gaming font-bold text-white mb-2">
@@ -90,30 +94,33 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Google Sign In */}
-        <motion.button
-          onClick={handleGoogleSignIn}
-          disabled={googleLoading}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full flex items-center justify-center gap-3 py-3 rounded-lg border border-gaming-border text-gaming-text hover:border-white/30 hover:bg-white/5 transition-all duration-200 mb-6 disabled:opacity-50"
-        >
-          {googleLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Chrome className="w-5 h-5 text-[#4285F4]" />
-          )}
-          Continue with Google
-        </motion.button>
+        {googleAuthEnabled && (
+          <>
+            <motion.button
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full flex items-center justify-center gap-3 py-3 rounded-lg border border-gaming-border text-gaming-text hover:border-white/30 hover:bg-white/5 transition-all duration-200 mb-6 disabled:opacity-50"
+            >
+              {googleLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Chrome className="w-5 h-5 text-[#4285F4]" />
+              )}
+              Continue with Google
+            </motion.button>
 
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gaming-border" />
-          </div>
-          <div className="relative flex justify-center text-xs text-gaming-textMuted bg-gaming-surface px-4">
-            Or sign in with email
-          </div>
-        </div>
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gaming-border" />
+              </div>
+              <div className="relative flex justify-center text-xs text-gaming-textMuted bg-gaming-surface px-4">
+                Or sign in with email
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -153,7 +160,7 @@ export default function LoginPage() {
               <input
                 {...register("password")}
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 autoComplete="current-password"
                 className="input-gaming w-full pl-10 pr-10"
               />

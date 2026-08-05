@@ -17,31 +17,33 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+const copyrightYear = 2026;
+
 const footerLinks = {
   company: [
     { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact" },
-    { href: "/blog", label: "Blog" },
-    { href: "/careers", label: "Careers" },
+    { href: "/about", label: "Blog" },
+    { href: "/contact", label: "Careers" },
   ],
   categories: [
-    { href: "/categories/headsets", label: "Headsets" },
-    { href: "/categories/keyboards", label: "Keyboards" },
-    { href: "/categories/mice", label: "Gaming Mice" },
-    { href: "/categories/controllers", label: "Controllers" },
-    { href: "/categories/monitors", label: "Monitors" },
+    { href: "/categories", label: "Headsets" },
+    { href: "/categories", label: "Keyboards" },
+    { href: "/categories", label: "Gaming Mice" },
+    { href: "/categories", label: "Controllers" },
+    { href: "/categories", label: "Monitors" },
   ],
   support: [
-    { href: "/faq", label: "FAQ" },
-    { href: "/shipping", label: "Shipping Info" },
-    { href: "/returns", label: "Returns" },
-    { href: "/track-order", label: "Track Order" },
+    { href: "/contact", label: "FAQ" },
+    { href: "/contact", label: "Shipping Info" },
+    { href: "/terms", label: "Returns" },
+    { href: "/account/orders", label: "Track Order" },
     { href: "/contact", label: "Support Center" },
   ],
   legal: [
     { href: "/terms", label: "Terms & Conditions" },
     { href: "/privacy", label: "Privacy Policy" },
-    { href: "/cookies", label: "Cookie Policy" },
+    { href: "/privacy", label: "Cookie Policy" },
   ],
 };
 
@@ -199,7 +201,7 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2">
                 {footerLinks.company.map((link) => (
-                  <li key={link.href}>
+                  <li key={`${link.href}-${link.label}`}>
                     <Link
                       href={link.href}
                       className="text-gaming-textMuted hover:text-neon-cyan text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
@@ -217,7 +219,7 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2">
                 {footerLinks.categories.map((link) => (
-                  <li key={link.href}>
+                  <li key={`${link.href}-${link.label}`}>
                     <Link
                       href={link.href}
                       className="text-gaming-textMuted hover:text-neon-cyan text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
@@ -235,7 +237,7 @@ export default function Footer() {
               </h4>
               <ul className="space-y-2">
                 {footerLinks.support.map((link) => (
-                  <li key={link.href}>
+                  <li key={`${link.href}-${link.label}`}>
                     <Link
                       href={link.href}
                       className="text-gaming-textMuted hover:text-neon-cyan text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
@@ -254,13 +256,13 @@ export default function Footer() {
       <div className="border-t border-gaming-border py-6">
         <div className="page-container flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-gaming-textMuted text-sm">
-            © {new Date().getFullYear()} Retro Gaming. All rights reserved.
+            © {copyrightYear} Retro Gaming. All rights reserved.
           </p>
 
           <div className="flex items-center gap-4">
             {footerLinks.legal.map((link) => (
               <Link
-                key={link.href}
+                key={`${link.href}-${link.label}`}
                 href={link.href}
                 className="text-gaming-textMuted hover:text-neon-cyan text-xs transition-colors"
               >

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import imagekit from "@/lib/imagekit";
+import { getAuthenticationParameters } from "@/lib/imagekit";
 import { auth } from "@/lib/auth";
 
 export async function GET() {
@@ -9,13 +9,19 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const authParams = imagekit.getAuthenticationParameters();
+    const authParams = getAuthenticationParameters();
 
     return NextResponse.json(authParams);
-  } catch {
+  } catch (error) {
+    const message =
+      error instanceof Error &&
+      error.message.includes("IMAGEKIT_PRIVATE_KEY")
+        ? "ImageKit is not configured"
+        : "Failed to get authentication parameters";
+
     return NextResponse.json(
-      { error: "Failed to get authentication parameters" },
-      { status: 500 }
+      { error: message },
+      { status: message.includes("not configured") ? 503 : 500 }
     );
   }
 }

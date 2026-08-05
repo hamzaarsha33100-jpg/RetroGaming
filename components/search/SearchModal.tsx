@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, TrendingUp, Clock, ArrowRight } from "lucide-react";
 import { useUIStore } from "@/store/uiStore";
@@ -177,9 +178,11 @@ export default function SearchModal() {
                       onClick={() => handleResultClick(product.name)}
                       className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors group"
                     >
-                      <img
+                      <Image
                         src={product.mainImage}
                         alt={product.name}
+                        width={48}
+                        height={48}
                         className="w-12 h-12 rounded-lg object-cover"
                       />
                       <div className="flex-1 min-w-0">

@@ -24,6 +24,7 @@ const formatDate = (date: string) => {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 };
 import {
@@ -43,7 +44,7 @@ import { toast } from "sonner";
 
 interface Order {
   _id: string;
-  orderNumber: string;
+  orderId: string;
   user: {
     _id: string;
     name: string;
@@ -138,7 +139,7 @@ export default function OrdersClient() {
 
   const filteredOrders = orders.filter(
     (order) =>
-      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -254,7 +255,7 @@ export default function OrdersClient() {
                     >
                       <td className="px-6 py-4">
                         <div className="font-medium text-white">
-                          #{order.orderNumber}
+                          #{order.orderId}
                         </div>
                         <div className="text-sm text-gray-500">
                           {order.items.length} items
@@ -322,7 +323,7 @@ export default function OrdersClient() {
             <>
               <DialogHeader>
                 <DialogTitle className="text-2xl text-white">
-                  Order #{selectedOrder.orderNumber}
+                  Order #{selectedOrder.orderId}
                 </DialogTitle>
               </DialogHeader>
 

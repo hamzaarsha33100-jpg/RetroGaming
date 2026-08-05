@@ -6,9 +6,10 @@ import { auth } from "@/lib/auth";
 // PUT /api/admin/banners/[id]/reorder - Reorder banner (admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session || session.user.role !== "admin") {
@@ -18,29 +19,24 @@ export async function PUT(
     await dbConnect();
 
     const body = await request.json();
-    const { direction } = body; // "up" or "down"
+    const { direction } = body;
 
-    const banner = await Banner.findById(params.id);
+    const banner = await Banner.findById(id);
     if (!banner) {
       return NextResponse.json({ error: "Banner not found" }, { status: 404 });
     }
 
-    // Find the banner to swap with
     const swapBanner = await Banner.findOne({
-      order: direction === "up" ? banner.order - 1 : banner.order + 1,
+      sortOrder: direction === "up" ? banner.sortOrder - 1 : banner.sortOrder + 1,
     });
 
     if (!swapBanner) {
-      return NextResponse.json(
-        { error: "Cannot reorder" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Cannot reorder" }, { status: 400 });
     }
 
-    // Swap orders
-    const tempOrder = banner.order;
-    banner.order = swapBanner.order;
-    swapBanner.order = tempOrder;
+    const tempOrder = banner.sortOrder;
+    banner.sortOrder = swapBanner.sortOrder;
+    swapBanner.sortOrder = tempOrder;
 
     await banner.save();
     await swapBanner.save();
@@ -48,9 +44,6 @@ export async function PUT(
     return NextResponse.json({ message: "Banner reordered successfully" });
   } catch (error) {
     console.error("Error reordering banner:", error);
-    return NextResponse.json(
-      { error: "Failed to reorder banner" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to reorder banner" }, { status: 500 });
   }
 }

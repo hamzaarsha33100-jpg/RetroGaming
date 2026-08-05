@@ -212,7 +212,7 @@ export default function AdminDashboard() {
                   borderRadius: "8px",
                   color: "#e0e0ff",
                 }}
-                formatter={(value: number) => [formatPrice(value), "Revenue"]}
+                formatter={(value) => [formatPrice(Number(value ?? 0)), "Revenue"]}
               />
               <Area
                 type="monotone"
@@ -299,7 +299,7 @@ export default function AdminDashboard() {
               data?.recentOrders.map((order) => (
                 <Link
                   key={order._id}
-                  href={`/admin/orders/${order._id}`}
+                  href={`/admin/orders`}
                   className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors"
                 >
                   <div>

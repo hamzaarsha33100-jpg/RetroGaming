@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import ProductCard from "@/components/products/ProductCard";
 import { Product } from "@/types";
@@ -28,12 +27,7 @@ export default function ProductSection({
   return (
     <section className="py-16">
       <div className="page-container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex items-end justify-between mb-10"
-        >
+        <div className="flex items-end justify-between mb-10">
           <div>
             {subtitle && (
               <p className="text-neon-cyan text-sm font-gaming uppercase tracking-widest mb-2">
@@ -55,19 +49,13 @@ export default function ProductSection({
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           )}
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map((product, index) => (
-            <motion.div
-              key={product._id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.slice(0, 3).map((product) => (
+            <div key={product._id} className="animate-fade-in">
               <ProductCard product={product} />
-            </motion.div>
+            </div>
           ))}
         </div>
 

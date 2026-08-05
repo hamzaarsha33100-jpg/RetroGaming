@@ -8,10 +8,13 @@ import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 export default function WishlistClient() {
   const { items, removeItem, clearWishlist } = useWishlistStore();
   const { addItem } = useCartStore();
+  const hasMounted = useHasMounted();
+  const displayItems = hasMounted ? items : [];
 
   const handleAddToCart = (item: any) => {
     if (item.isOutOfStock) {
@@ -39,7 +42,7 @@ export default function WishlistClient() {
     toast.success("Removed from wishlist");
   };
 
-  if (items.length === 0) {
+  if (displayItems.length === 0) {
     return (
       <div className="bg-slate-900/50 backdrop-blur-xl border border-purple-500/20 rounded-2xl p-12 text-center">
         <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -65,7 +68,7 @@ export default function WishlistClient() {
       {/* Header Actions */}
       <div className="flex items-center justify-between mb-6">
         <p className="text-gray-400">
-          {items.length} {items.length === 1 ? "item" : "items"} in wishlist
+          {displayItems.length} {displayItems.length === 1 ? "item" : "items"} in wishlist
         </p>
         <Button
           onClick={clearWishlist}
@@ -78,7 +81,7 @@ export default function WishlistClient() {
 
       {/* Wishlist Items */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {items.map((item, index) => {
+        {displayItems.map((item, index) => {
           const displayPrice = item.salePrice ?? item.price;
 
           return (

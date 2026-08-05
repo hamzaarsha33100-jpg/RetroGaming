@@ -1,24 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
-// import { sendContactEmail } from "@/lib/email"; // Uncomment when email service is ready
+import { z } from "zod";
+import { sendContactEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
+
+const contactSchema = z.object({
+  name: z.string().trim().min(2).max(80),
+  email: z.string().trim().email().max(120),
+  subject: z.string().trim().min(3).max(120),
+  message: z.string().trim().min(10).max(3000),
+});
 
 export async function POST(request: NextRequest) {
+  const rateLimitResult = rateLimit(request, 5, 10 * 60 * 1000);
+  if (rateLimitResult) return rateLimitResult;
+
   try {
     const body = await request.json();
-    const { name, email, subject, message } = body;
+    const validation = contactSchema.safeParse(body);
 
-    // Validate input
-    if (!name || !email || !subject || !message) {
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: validation.error.errors[0].message },
         { status: 400 }
       );
     }
 
-    // TODO: Send email using Nodemailer
-    // await sendContactEmail({ name, email, subject, message });
+    const { name, email, subject, message } = validation.data;
 
-    // For now, just log it
-    console.log("Contact form submission:", { name, email, subject, message });
+    if (process.env.SMTP_USER) {
+      await sendContactEmail({ name, email, subject, message });
+    } else {
+      console.log("Contact form submission (SMTP not configured):", {
+        name,
+        email,
+        subject,
+        message,
+      });
+    }
 
     return NextResponse.json({
       message: "Message sent successfully",

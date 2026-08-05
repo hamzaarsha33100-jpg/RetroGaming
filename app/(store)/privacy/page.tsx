@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 
+const lastUpdated = "July 4, 2026";
+
 export const metadata: Metadata = {
   title: "Privacy Policy | Retro Gaming",
   description: "Read our privacy policy to understand how we collect, use, and protect your data",
@@ -14,11 +16,7 @@ export default function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="text-gray-400 mb-8">
-            Last updated: {new Date().toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            Last updated: {lastUpdated}
           </p>
 
           <div className="bg-slate-900/50 backdrop-blur-xl border border-purple-500/20 rounded-2xl p-8 space-y-8">

@@ -14,6 +14,9 @@ declare module "next-auth" {
     isActive?: boolean;
   }
 
+}
+
+declare module "@auth/core/jwt" {
   interface JWT {
     id?: string;
     role?: string;
@@ -37,6 +40,7 @@ export interface Product {
   specifications: { key: string; value: string }[];
   tags: string[];
   mainImage: string;
+  mainImageFileId?: string;
   galleryImages: { url: string; alt?: string; isPrimary?: boolean }[];
   bannerImage?: string;
   imageTransition: "fade" | "slide" | "zoom" | "flip";
@@ -52,6 +56,28 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
 }
+
+export type ProductCardData = Pick<
+  Product,
+  | "_id"
+  | "name"
+  | "slug"
+  | "category"
+  | "brand"
+  | "price"
+  | "salePrice"
+  | "discountPercentage"
+  | "stockQuantity"
+  | "mainImage"
+  | "shortDescription"
+  | "isFeatured"
+  | "isTrending"
+  | "isNewArrival"
+  | "isBestSeller"
+  | "isOutOfStock"
+  | "rating"
+  | "reviewCount"
+>;
 
 export interface Category {
   _id: string;

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -15,6 +16,7 @@ import {
 import { useCartStore } from "@/store/cartStore";
 import { useUIStore } from "@/store/uiStore";
 import { formatPrice } from "@/lib/utils";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 export default function CartDrawer() {
   const { isCartOpen, closeCart } = useUIStore();
@@ -28,8 +30,11 @@ export default function CartDrawer() {
     removeSavedItem,
     getSubtotal,
   } = useCartStore();
+  const hasMounted = useHasMounted();
 
-  const subtotal = getSubtotal();
+  const displayItems = hasMounted ? items : [];
+  const displaySavedItems = hasMounted ? savedItems : [];
+  const subtotal = hasMounted ? getSubtotal() : 0;
 
   return (
     <AnimatePresence>
@@ -57,7 +62,7 @@ export default function CartDrawer() {
               <div className="flex items-center gap-3">
                 <ShoppingCart className="w-5 h-5 text-neon-cyan" />
                 <h2 className="font-gaming font-bold text-lg text-white">
-                  Cart ({items.length})
+                  Cart ({displayItems.length})
                 </h2>
               </div>
               <button
@@ -70,7 +75,7 @@ export default function CartDrawer() {
 
             {/* Cart Items */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {items.length === 0 ? (
+              {displayItems.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -93,7 +98,7 @@ export default function CartDrawer() {
                 </motion.div>
               ) : (
                 <AnimatePresence>
-                  {items.map((item) => (
+                  {displayItems.map((item) => (
                     <motion.div
                       key={item.productId}
                       initial={{ opacity: 0, height: 0 }}
@@ -107,9 +112,11 @@ export default function CartDrawer() {
                           onClick={closeCart}
                           className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gaming-dark"
                         >
-                          <img
+                          <Image
                             src={item.image}
                             alt={item.name}
+                            width={80}
+                            height={80}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
                           />
                         </Link>
@@ -196,19 +203,21 @@ export default function CartDrawer() {
               )}
 
               {/* Saved for Later */}
-              {savedItems.length > 0 && (
+              {displaySavedItems.length > 0 && (
                 <div className="pt-4 border-t border-gaming-border">
                   <h3 className="text-sm font-medium text-gaming-textMuted mb-3">
-                    Saved for Later ({savedItems.length})
+                    Saved for Later ({displaySavedItems.length})
                   </h3>
-                  {savedItems.map((item) => (
+                  {displaySavedItems.map((item) => (
                     <div
                       key={item.productId}
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
                     >
-                      <img
+                      <Image
                         src={item.image}
                         alt={item.name}
+                        width={48}
+                        height={48}
                         className="w-12 h-12 rounded object-cover"
                       />
                       <div className="flex-1 min-w-0">
@@ -240,7 +249,7 @@ export default function CartDrawer() {
             </div>
 
             {/* Footer */}
-            {items.length > 0 && (
+            {displayItems.length > 0 && (
               <div className="p-6 border-t border-gaming-border space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-gaming-textMuted">Subtotal</span>

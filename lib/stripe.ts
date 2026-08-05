@@ -1,11 +1,19 @@
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-08-27.basil",
-  typescript: true,
-});
+let stripe: Stripe | null = null;
 
-export default stripe;
+export function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY is required for checkout");
+  }
+
+  stripe ??= new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-08-27.basil",
+    typescript: true,
+  });
+
+  return stripe;
+}
 
 export const formatAmountForStripe = (amount: number): number => {
   return Math.round(amount * 100);

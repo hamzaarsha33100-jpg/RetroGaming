@@ -6,8 +6,10 @@ import Review from "@/models/Review";
 import ProductDetailClient from "./ProductDetailClient";
 import ProductSection from "@/components/home/ProductSection";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 async function getProduct(slug: string) {
@@ -40,7 +42,8 @@ async function getReviews(productId: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const product = await getProduct(params.slug);
+  const { slug } = await params;
+  const product = await getProduct(slug);
   if (!product) return { title: "Product Not Found" };
 
   return {
@@ -55,7 +58,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Props) {
-  const product = await getProduct(params.slug);
+  const { slug } = await params;
+  const product = await getProduct(slug);
   if (!product) notFound();
 
   // Increment views

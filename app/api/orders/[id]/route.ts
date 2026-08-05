@@ -5,9 +5,10 @@ import { auth } from "@/lib/auth";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,7 +16,7 @@ export async function GET(
 
     await connectDB();
 
-    const query: Record<string, unknown> = { _id: params.id };
+    const query: Record<string, unknown> = { _id: id };
     if (session.user.role !== "admin") {
       query.user = session.user.id;
     }
@@ -39,9 +40,10 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
     if (!session || session.user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -51,7 +53,7 @@ export async function PUT(
     const body = await req.json();
     const { status, trackingNumber, trackingUrl } = body;
 
-    const order = await Order.findById(params.id);
+    const order = await Order.findById(id);
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
@@ -73,7 +75,7 @@ export async function PUT(
     if (trackingNumber) updateData.trackingNumber = trackingNumber;
     if (trackingUrl) updateData.trackingUrl = trackingUrl;
 
-    const updatedOrder = await Order.findByIdAndUpdate(params.id, updateData, {
+    const updatedOrder = await Order.findByIdAndUpdate(id, updateData, {
       new: true,
     }).populate("user", "name email");
 

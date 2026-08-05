@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const rateLimitMap = new Map<string, { count: number; expiresAt: number }>();
 
 export function rateLimit(
   req: NextRequest,
@@ -13,12 +13,10 @@ export function rateLimit(
     "unknown";
 
   const now = Date.now();
-  const windowStart = now - windowMs;
-
   const userLimit = rateLimitMap.get(ip);
 
-  if (!userLimit || userLimit.resetTime < windowStart) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now });
+  if (!userLimit || userLimit.expiresAt <= now) {
+    rateLimitMap.set(ip, { count: 1, expiresAt: now + windowMs });
     return null;
   }
 
@@ -28,7 +26,7 @@ export function rateLimit(
       {
         status: 429,
         headers: {
-          "Retry-After": String(Math.ceil((userLimit.resetTime - now) / 1000)),
+          "Retry-After": String(Math.ceil((userLimit.expiresAt - now) / 1000)),
         },
       }
     );
@@ -37,13 +35,3 @@ export function rateLimit(
   userLimit.count++;
   return null;
 }
-
-// Cleanup old entries every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of rateLimitMap.entries()) {
-    if (value.resetTime < now - 15 * 60 * 1000) {
-      rateLimitMap.delete(key);
-    }
-  }
-}, 10 * 60 * 1000);

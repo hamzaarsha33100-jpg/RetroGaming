@@ -1,22 +1,26 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import { MongoClient } from "mongodb";
-import type { Adapter } from "next-auth/adapters";
+import { authConfig } from "./auth.config";
+import bcrypt from "bcryptjs";
+import connectDB from "./mongodb";
+import User from "@/models/User";
 
-const client = new MongoClient(process.env.MONGODB_URI!);
-const clientPromise = client.connect();
+const hasGoogleCredentials =
+  Boolean(process.env.GOOGLE_CLIENT_ID) &&
+  Boolean(process.env.GOOGLE_CLIENT_SECRET);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: MongoDBAdapter(clientPromise, {
-    databaseName: "retrogaming",
-  }) as Adapter,
+  ...authConfig,
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    ...(hasGoogleCredentials
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          }),
+        ]
+      : []),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -28,16 +32,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("Invalid credentials");
         }
 
-        // Import mongoose models only in Node.js runtime
-        const bcrypt = await import("bcryptjs");
-        const { default: connectDB } = await import("./mongodb");
-        const { default: User } = await import("@/models/User");
-
         await connectDB();
 
-        const user = await User.findOne({ email: credentials.email }).select(
-          "+password"
-        );
+        const email = String(credentials.email).trim().toLowerCase();
+        const user = await User.findOne({ email }).select("+password");
 
         if (!user || !user.password) {
           throw new Error("Invalid credentials");
@@ -52,6 +50,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("Invalid credentials");
         }
 
+        if (user.isActive === false) {
+          throw new Error("Account is inactive");
+        }
+
         return {
           id: user._id.toString(),
           email: user.email,
@@ -64,19 +66,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account, trigger }) {
+    ...authConfig.callbacks,
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "customer";
         token.isActive = (user as { isActive?: boolean }).isActive ?? true;
       }
 
-      // Only run DB queries during sign in, not on every request
-      if (account?.provider === "google" || trigger === "signIn") {
-        if (account?.provider === "google") {
-          const { default: connectDB } = await import("./mongodb");
-          const { default: User } = await import("@/models/User");
-          
+      if (account?.provider === "google" && token.email) {
+        try {
           await connectDB();
           const dbUser = await User.findOne({ email: token.email });
           if (dbUser) {
@@ -84,45 +83,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.role = dbUser.role;
             token.isActive = dbUser.isActive;
           }
+        } catch (error) {
+          console.error("Google JWT DB error:", error);
         }
       }
 
       return token;
     },
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
-        session.user.isActive = token.isActive as boolean;
-      }
-      return session;
-    },
     async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        const { default: connectDB } = await import("./mongodb");
-        const { default: User } = await import("@/models/User");
-        
-        await connectDB();
-        const existingUser = await User.findOne({ email: user.email });
-        if (!existingUser) {
-          await User.create({
-            name: user.name,
-            email: user.email,
-            image: user.image,
-            role: "customer",
-            provider: "google",
-          });
+      if (account?.provider === "google" && user.email) {
+        try {
+          await connectDB();
+          const existingUser = await User.findOne({ email: user.email });
+          if (!existingUser) {
+            await User.create({
+              name: user.name,
+              email: user.email,
+              image: user.image,
+              role: "customer",
+              provider: "google",
+            });
+          }
+        } catch (error) {
+          console.error("Google sign-in DB error:", error);
+          return false;
         }
       }
       return true;
     },
   },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
 });

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart,
   Search,
@@ -20,9 +21,17 @@ import {
 import { useCartStore } from "@/store/cartStore";
 import { useUIStore } from "@/store/uiStore";
 import { useWishlistStore } from "@/store/wishlistStore";
-import CartDrawer from "@/components/cart/CartDrawer";
-import SearchModal from "@/components/search/SearchModal";
-import MobileMenu from "@/components/layout/MobileMenu";
+import { useHasMounted } from "@/hooks/useHasMounted";
+
+const CartDrawer = dynamic(() => import("@/components/cart/CartDrawer"), {
+  ssr: false,
+});
+const SearchModal = dynamic(() => import("@/components/search/SearchModal"), {
+  ssr: false,
+});
+const MobileMenu = dynamic(() => import("@/components/layout/MobileMenu"), {
+  ssr: false,
+});
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -37,6 +46,7 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { getItemCount } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
+  const hasMounted = useHasMounted();
   const { toggleCart, toggleSearch, toggleMobileMenu, isMobileMenuOpen } =
     useUIStore();
 
@@ -46,16 +56,28 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const cartCount = getItemCount();
-  const wishlistCount = wishlistItems.length;
+  const handleUserMenuToggle = useCallback(
+    () => setUserMenuOpen((prev) => !prev),
+    []
+  );
+
+  const handleUserMenuClose = useCallback(
+    () => setUserMenuOpen(false),
+    []
+  );
+
+  const handleSignOut = useCallback(() => {
+    setUserMenuOpen(false);
+    signOut({ callbackUrl: "/" });
+  }, []);
+
+  const cartCount = hasMounted ? getItemCount() : 0;
+  const wishlistCount = useMemo(() => (hasMounted ? wishlistItems.length : 0), [hasMounted, wishlistItems.length]);
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={`sticky-nav ${
+      <nav
+        className={`sticky-nav animate-slide-down ${
           scrolled
             ? "bg-gaming-dark/90 backdrop-blur-xl border-b border-gaming-border shadow-lg"
             : "bg-transparent"
@@ -114,19 +136,15 @@ export default function Navbar() {
 
               {/* Wishlist */}
               <Link
-                href="/wishlist"
+                href="/account/wishlist"
                 className="relative p-2 text-gaming-textMuted hover:text-neon-pink transition-colors"
                 aria-label="Wishlist"
               >
                 <Heart className="w-5 h-5" />
                 {wishlistCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-neon-pink text-white text-xs rounded-full flex items-center justify-center font-bold"
-                  >
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-neon-pink text-white text-xs rounded-full flex items-center justify-center font-bold animate-pop-in">
                     {wishlistCount > 9 ? "9+" : wishlistCount}
-                  </motion.span>
+                  </span>
                 )}
               </Link>
 
@@ -138,13 +156,9 @@ export default function Navbar() {
               >
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-4 h-4 bg-neon-cyan text-gaming-dark text-xs rounded-full flex items-center justify-center font-bold"
-                  >
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-neon-cyan text-gaming-dark text-xs rounded-full flex items-center justify-center font-bold animate-pop-in">
                     {cartCount > 9 ? "9+" : cartCount}
-                  </motion.span>
+                  </span>
                 )}
               </button>
 
@@ -152,13 +166,15 @@ export default function Navbar() {
               {session ? (
                 <div className="relative">
                   <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    onClick={handleUserMenuToggle}
                     className="flex items-center gap-2 px-3 py-2 rounded-full bg-gaming-surface border border-gaming-border hover:border-neon-cyan/50 transition-all duration-300"
                   >
                     {session.user?.image ? (
-                      <img
+                      <Image
                         src={session.user.image}
                         alt={session.user.name || "User"}
+                        width={24}
+                        height={24}
                         className="w-6 h-6 rounded-full"
                       />
                     ) : (
@@ -174,68 +190,59 @@ export default function Navbar() {
                     />
                   </button>
 
-                  <AnimatePresence>
-                    {userMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-52 bg-gaming-surface border border-gaming-border rounded-xl shadow-2xl overflow-hidden z-50"
-                        onMouseLeave={() => setUserMenuOpen(false)}
+                  {userMenuOpen && (
+                    <div
+                      className="absolute right-0 mt-2 w-52 bg-gaming-surface border border-gaming-border rounded-xl shadow-2xl overflow-hidden z-50 animate-scale-in"
+                      onMouseLeave={handleUserMenuClose}
+                    >
+                      <div className="p-3 border-b border-gaming-border">
+                        <p className="text-sm font-medium text-gaming-text truncate">
+                          {session.user?.name}
+                        </p>
+                        <p className="text-xs text-gaming-textMuted truncate">
+                          {session.user?.email}
+                        </p>
+                      </div>
+
+                      {session.user?.role === "admin" && (
+                        <Link
+                          href="/admin"
+                          onClick={handleUserMenuClose}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-colors"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Admin Dashboard
+                        </Link>
+                      )}
+
+                      <Link
+                        href="/account"
+                        onClick={handleUserMenuClose}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-colors"
                       >
-                        <div className="p-3 border-b border-gaming-border">
-                          <p className="text-sm font-medium text-gaming-text truncate">
-                            {session.user?.name}
-                          </p>
-                          <p className="text-xs text-gaming-textMuted truncate">
-                            {session.user?.email}
-                          </p>
-                        </div>
+                        <User className="w-4 h-4" />
+                        My Profile
+                      </Link>
+                      <Link
+                        href="/account/orders"
+                        onClick={handleUserMenuClose}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-colors"
+                      >
+                        <Package className="w-4 h-4" />
+                        My Orders
+                      </Link>
 
-                        {session.user?.role === "admin" && (
-                          <Link
-                            href="/admin"
-                            onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-2.5 text-sm text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-colors"
-                          >
-                            <Settings className="w-4 h-4" />
-                            Admin Dashboard
-                          </Link>
-                        )}
-
-                        <Link
-                          href="/profile"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-colors"
+                      <div className="border-t border-gaming-border">
+                        <button
+                          onClick={handleSignOut}
+                          className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                         >
-                          <User className="w-4 h-4" />
-                          My Profile
-                        </Link>
-                        <Link
-                          href="/orders"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-colors"
-                        >
-                          <Package className="w-4 h-4" />
-                          My Orders
-                        </Link>
-
-                        <div className="border-t border-gaming-border">
-                          <button
-                            onClick={() => {
-                              setUserMenuOpen(false);
-                              signOut({ callbackUrl: "/" });
-                            }}
-                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                          >
-                            <LogOut className="w-4 h-4" />
-                            Sign Out
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="hidden lg:flex items-center gap-2">
@@ -257,34 +264,16 @@ export default function Navbar() {
                 className="lg:hidden p-2 text-gaming-textMuted hover:text-neon-cyan transition-colors"
                 aria-label="Toggle menu"
               >
-                <AnimatePresence mode="wait">
-                  {isMobileMenuOpen ? (
-                    <motion.div
-                      key="close"
-                      initial={{ rotate: -90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: 90, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <X className="w-6 h-6" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="menu"
-                      initial={{ rotate: 90, opacity: 0 }}
-                      animate={{ rotate: 0, opacity: 1 }}
-                      exit={{ rotate: -90, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Menu className="w-6 h-6" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {isMobileMenuOpen ? (
+                  <X className="w-6 h-6 animate-rotate-in" />
+                ) : (
+                  <Menu className="w-6 h-6 animate-rotate-in" />
+                )}
               </button>
             </div>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Mobile Menu */}
       <MobileMenu />

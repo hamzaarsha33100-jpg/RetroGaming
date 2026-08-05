@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Zap, ArrowRight, Clock } from "lucide-react";
 import ProductCard from "@/components/products/ProductCard";
 import { Product } from "@/types";
@@ -44,14 +43,9 @@ function CountdownTimer({ targetHours = 8 }: { targetHours?: number }) {
       ].map(({ value, label }, i) => (
         <div key={label} className="flex items-center gap-1">
           <div className="bg-gaming-dark border border-neon-pink/30 rounded-lg p-2 min-w-[50px] text-center">
-            <motion.span
-              key={value}
-              initial={{ y: -10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="block text-xl font-gaming font-bold text-neon-pink"
-            >
+            <span className="block text-xl font-gaming font-bold text-neon-pink tabular-nums">
               {String(value).padStart(2, "0")}
-            </motion.span>
+            </span>
             <span className="text-gaming-textMuted text-xs">{label}</span>
           </div>
           {i < 2 && (
@@ -70,19 +64,12 @@ export default function FlashSaleSection({ products }: FlashSaleSectionProps) {
     <section className="py-16">
       <div className="page-container">
         <div className="relative rounded-2xl overflow-hidden border border-neon-pink/20 bg-gradient-to-r from-gaming-surface to-gaming-surfaceLight p-8">
-          {/* Background Effect */}
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 right-0 w-96 h-96 bg-neon-pink/5 rounded-full blur-3xl" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/5 rounded-full blur-3xl" />
           </div>
 
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
-          >
+          <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-xl bg-neon-pink/10 border border-neon-pink/20">
                 <Zap className="w-8 h-8 text-neon-pink animate-neon-pulse" />
@@ -90,12 +77,7 @@ export default function FlashSaleSection({ products }: FlashSaleSectionProps) {
               <div>
                 <h2 className="text-3xl font-gaming font-bold text-white">
                   Flash{" "}
-                  <span
-                    style={{
-                      color: "#ff006e",
-                      textShadow: "0 0 10px #ff006e",
-                    }}
-                  >
+                  <span style={{ color: "#ff006e", textShadow: "0 0 10px #ff006e" }}>
                     Sale
                   </span>
                 </h2>
@@ -112,19 +94,13 @@ export default function FlashSaleSection({ products }: FlashSaleSectionProps) {
               </div>
               <CountdownTimer targetHours={8} />
             </div>
-          </motion.div>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {products.slice(0, 4).map((product, index) => (
-              <motion.div
-                key={product._id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {products.slice(0, 4).map((product) => (
+              <div key={product._id} className="animate-fade-in">
                 <ProductCard product={product} />
-              </motion.div>
+              </div>
             ))}
           </div>
 

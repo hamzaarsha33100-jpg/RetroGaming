@@ -97,13 +97,13 @@ GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 
 # Stripe
-NEXT_PUBLIC_STRIPE_PUBLIC_KEY=your_stripe_public_key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_public_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
 
 # ImageKit (Optional)
 NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY=your_public_key
 IMAGEKIT_PRIVATE_KEY=your_private_key
-IMAGEKIT_URL_ENDPOINT=your_endpoint
+NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT=your_endpoint
 
 # Email (Optional)
 SMTP_HOST=smtp.gmail.com
@@ -114,6 +114,9 @@ SMTP_FROM=noreply@retrogaming.com
 
 # App URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# One-time admin setup API protection
+SETUP_ADMIN_TOKEN=your_long_random_setup_token
 ```
 
 4. **Create admin user**
@@ -203,7 +206,7 @@ Retro Gaming/
 ### Optional (for full functionality)
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth secret
-- `STRIPE_PUBLIC_KEY` - Stripe public key
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key
 - `STRIPE_SECRET_KEY` - Stripe secret key
 - ImageKit credentials
 - SMTP credentials

@@ -6,9 +6,10 @@ import { auth } from "@/lib/auth";
 // PUT /api/admin/customers/[id] - Update customer status (admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await auth();
 
     if (!session || session.user.role !== "admin") {
@@ -21,7 +22,7 @@ export async function PUT(
     const { isActive } = body;
 
     // Prevent admin from deactivating themselves
-    if (params.id === session.user.id) {
+    if (id === session.user.id) {
       return NextResponse.json(
         { error: "Cannot modify your own account" },
         { status: 400 }
@@ -29,7 +30,7 @@ export async function PUT(
     }
 
     const user = await User.findByIdAndUpdate(
-      params.id,
+      id,
       { isActive },
       { new: true }
     ).select("-password -resetPasswordToken -resetPasswordExpires");
@@ -41,9 +42,6 @@ export async function PUT(
     return NextResponse.json(user);
   } catch (error) {
     console.error("Error updating customer:", error);
-    return NextResponse.json(
-      { error: "Failed to update customer" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update customer" }, { status: 500 });
   }
 }

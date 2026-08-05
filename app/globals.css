@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -79,15 +77,15 @@
   }
 
   .neon-text {
-    text-shadow: 0 0 7px #00fff5, 0 0 10px #00fff5, 0 0 21px #00fff5;
+    text-shadow: 0 0 4px #00fff5, 0 0 8px rgba(0, 255, 245, 0.4);
   }
 
   .neon-text-purple {
-    text-shadow: 0 0 7px #9b59b6, 0 0 10px #9b59b6, 0 0 21px #9b59b6;
+    text-shadow: 0 0 4px #9b59b6, 0 0 8px rgba(155, 89, 182, 0.4);
   }
 
   .neon-border {
-    box-shadow: 0 0 5px #00fff5, 0 0 10px #00fff5, inset 0 0 5px rgba(0, 255, 245, 0.1);
+    box-shadow: 0 0 4px rgba(0, 255, 245, 0.3), 0 0 8px rgba(0, 255, 245, 0.15);
   }
 
   .gradient-text {
@@ -100,12 +98,12 @@
 
   .gaming-card:hover {
     @apply border-neon-cyan/30;
-    box-shadow: 0 4px 20px rgba(0, 255, 245, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 255, 245, 0.06);
   }
 
   .btn-primary {
     @apply bg-gradient-to-r from-neon-cyan to-accent text-gaming-dark font-semibold px-6 py-3 rounded-lg
-           transition-all duration-300 hover:scale-105 hover:shadow-neon;
+           transition-all duration-300 hover:scale-[1.02] hover:shadow-lg;
   }
 
   .btn-secondary {
@@ -163,7 +161,7 @@
 
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(135deg, #00fff5, #9b59b6, #ff006e);
+    background: linear-gradient(135deg, #00d4cc, #a855f7, #f472b6);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -178,5 +176,75 @@
   .mask-fade-out {
     -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
     mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee 25s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.4s ease-out forwards;
+  }
+
+  @keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .animate-pop-in {
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.15s ease-out forwards;
+  }
+
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .animate-rotate-in {
+    animation: rotateIn 0.2s ease-out forwards;
+  }
+
+  @keyframes rotateIn {
+    from { opacity: 0; transform: rotate(-90deg); }
+    to { opacity: 1; transform: rotate(0deg); }
+  }
+
+  .animate-skeleton {
+    animation: skeleton 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
   }
 }

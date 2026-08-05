@@ -20,12 +20,13 @@ const formatDate = (date: string) => {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 };
 
 interface Order {
   _id: string;
-  orderNumber: string;
+  orderId: string;
   items: {
     product: string;
     name: string;
@@ -75,7 +76,8 @@ export default function OrdersClient() {
     queryFn: async () => {
       const res = await fetch("/api/orders");
       if (!res.ok) throw new Error("Failed to fetch orders");
-      return res.json();
+      const json = await res.json();
+      return json.data ?? [];
     },
   });
 
@@ -134,7 +136,7 @@ export default function OrdersClient() {
             <div className="flex flex-wrap items-start justify-between gap-4 mb-4 pb-4 border-b border-purple-500/20">
               <div>
                 <h3 className="font-bold text-white text-lg mb-1">
-                  Order #{order.orderNumber}
+                  Order #{order.orderId}
                 </h3>
                 <p className="text-sm text-gray-400">
                   Placed on {formatDate(order.createdAt)}

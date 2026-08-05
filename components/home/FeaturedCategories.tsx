@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import Image from "next/image";
 import { ArrowRight, Headphones, Keyboard, Mouse, Gamepad2, Monitor, Cpu } from "lucide-react";
 import { Category } from "@/types";
 
@@ -44,12 +44,7 @@ export default function FeaturedCategories({
   return (
     <section className="py-20">
       <div className="page-container">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="flex items-end justify-between mb-12"
-        >
+        <div className="flex items-end justify-between mb-12">
           <div>
             <p className="text-neon-cyan text-sm font-gaming uppercase tracking-widest mb-2">
               Browse
@@ -66,7 +61,7 @@ export default function FeaturedCategories({
             View All
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {displayCategories.map((category, index) => {
@@ -76,25 +71,20 @@ export default function FeaturedCategories({
             const iconColor = iconColors[index % iconColors.length];
 
             return (
-              <motion.div
-                key={category._id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
+              <div key={category._id} className="animate-fade-in" style={{ animationDelay: `${index * 80}ms` }}>
                 <Link href={`/categories/${category.slug}`}>
-                  <motion.div
-                    whileHover={{ scale: 1.05, y: -4 }}
-                    className={`flex flex-col items-center gap-3 p-6 rounded-xl bg-gradient-to-br ${colorClass} border backdrop-blur-sm transition-all duration-300 group cursor-pointer`}
+                  <div
+                    className={`flex flex-col items-center gap-3 p-6 rounded-xl bg-gradient-to-br ${colorClass} border backdrop-blur-sm transition-all duration-300 group cursor-pointer hover:scale-105 hover:-translate-y-1`}
                   >
                     <div
                       className={`p-3 rounded-xl bg-gaming-dark/50 ${iconColor} group-hover:scale-110 transition-transform duration-300`}
                     >
                       {category.image ? (
-                        <img
+                        <Image
                           src={category.image}
                           alt={category.name}
+                          width={32}
+                          height={32}
                           className="w-8 h-8 object-cover rounded"
                         />
                       ) : (
@@ -104,9 +94,9 @@ export default function FeaturedCategories({
                     <span className="text-white font-medium text-sm text-center group-hover:text-neon-cyan transition-colors">
                       {category.name}
                     </span>
-                  </motion.div>
+                  </div>
                 </Link>
-              </motion.div>
+              </div>
             );
           })}
         </div>

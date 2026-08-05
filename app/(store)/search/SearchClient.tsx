@@ -10,21 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-interface Product {
-  _id: string;
-  name: string;
-  slug: string;
-  price: number;
-  salePrice?: number;
-  mainImage: string;
-  brand: string;
-  category: {
-    _id: string;
-    name: string;
-  };
-  stockQuantity: number;
-  isOutOfStock: boolean;
-}
+import { ProductCardData } from "@/types";
 
 export default function SearchClient() {
   const searchParams = useSearchParams();
@@ -32,7 +18,7 @@ export default function SearchClient() {
   const [activeQuery, setActiveQuery] = useState(query);
 
   // Fetch search results
-  const { data: products = [], isLoading } = useQuery<Product[]>({
+  const { data: products = [], isLoading } = useQuery<ProductCardData[]>({
     queryKey: ["search", activeQuery],
     queryFn: async () => {
       if (!activeQuery.trim()) return [];

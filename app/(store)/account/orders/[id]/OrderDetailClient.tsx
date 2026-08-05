@@ -20,6 +20,7 @@ const formatDate = (date: string) => {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "UTC",
   });
 };
 import Link from "next/link";
@@ -68,7 +69,7 @@ export default function OrderDetailClient({ order }: OrderDetailClientProps) {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white mb-1">
-              Order #{order.orderNumber}
+              Order #{order.orderId}
             </h2>
             <p className="text-gray-400">
               Placed on {formatDate(order.createdAt)}

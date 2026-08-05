@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { ArrowRight, Truck, Shield, RefreshCw, Headphones } from "lucide-react";
 
 const features = [
@@ -39,16 +38,12 @@ export default function PromoBannerSection() {
   return (
     <section className="py-16">
       <div className="page-container space-y-8">
-        {/* Feature highlights */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {features.map((feature, index) => (
-            <motion.div
+            <div
               key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className={`flex items-center gap-4 p-4 rounded-xl border ${feature.bg} transition-all duration-300 hover:scale-105`}
+              className={`flex items-center gap-4 p-4 rounded-xl border ${feature.bg} transition-all duration-300 hover:scale-105 animate-fade-in`}
+              style={{ animationDelay: `${index * 80}ms` }}
             >
               <div className={`p-2 rounded-lg ${feature.bg}`}>
                 <feature.icon className={`w-6 h-6 ${feature.color}`} />
@@ -61,17 +56,11 @@ export default function PromoBannerSection() {
                   {feature.description}
                 </p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
-        {/* Promo Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="relative rounded-2xl overflow-hidden"
-        >
+        <div className="relative rounded-2xl overflow-hidden animate-fade-in">
           <div
             className="relative h-64 md:h-80 bg-gradient-to-r from-gaming-darker to-gaming-surface flex items-center"
             style={{
@@ -95,19 +84,14 @@ export default function PromoBannerSection() {
                   unbeatable prices.
                 </p>
                 <Link href="/categories?sale=true">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="btn-primary flex items-center gap-2"
-                  >
+                  <button className="btn-primary flex items-center gap-2 hover:scale-105 transition-transform">
                     Shop the Sale
                     <ArrowRight className="w-4 h-4" />
-                  </motion.button>
+                  </button>
                 </Link>
               </div>
             </div>
 
-            {/* Decorative elements */}
             <div className="absolute right-10 top-1/2 -translate-y-1/2 hidden md:block">
               <div className="relative w-64 h-64">
                 <div className="absolute inset-0 rounded-full border border-neon-purple/20 animate-ping" />
@@ -121,7 +105,7 @@ export default function PromoBannerSection() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

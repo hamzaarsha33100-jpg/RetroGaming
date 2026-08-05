@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Zap } from "lucide-react";
+import AppProviders from "@/components/providers/AppProviders";
 
 export default function AuthLayout({
   children,
@@ -7,6 +8,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
+    <AppProviders>
     <div className="min-h-screen bg-gaming-dark flex flex-col">
       {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -39,5 +41,6 @@ export default function AuthLayout({
         {children}
       </div>
     </div>
+    </AppProviders>
   );
 }

@@ -1,15 +1,18 @@
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Category from "@/models/Category";
 import Banner from "@/models/Banner";
-import HeroSection from "@/components/home/HeroSection";
-import FeaturedCategories from "@/components/home/FeaturedCategories";
 import ProductSection from "@/components/home/ProductSection";
-import FlashSaleSection from "@/components/home/FlashSaleSection";
-import TestimonialsSection from "@/components/home/TestimonialsSection";
-import BrandPartnersSection from "@/components/home/BrandPartnersSection";
-import PromoBannerSection from "@/components/home/PromoBannerSection";
+import { demoBanners, demoCategories, demoProducts } from "@/lib/demo-data";
+
+export const revalidate = 300;
+
+const HeroSection = dynamic(() => import("@/components/home/HeroSection"));
+const FeaturedCategories = dynamic(() => import("@/components/home/FeaturedCategories"));
+
+const LazySections = dynamic(() => import("@/components/home/LazySections").then(mod => mod.LazySections));
 
 async function getHomeData() {
   try {
@@ -17,131 +20,59 @@ async function getHomeData() {
 
     const [banners, categories, featuredProducts, trendingProducts, bestSellers, newArrivals, flashSaleProducts] =
       await Promise.all([
-        Banner.find({ isActive: true, position: "hero" })
-          .sort({ sortOrder: 1 })
-          .limit(5)
-          .lean(),
-        Category.find({ isActive: true })
-          .sort({ sortOrder: 1 })
-          .limit(6)
-          .lean(),
-        Product.find({ isActive: true, isFeatured: true })
-          .populate("category", "name slug")
-          .sort({ createdAt: -1 })
-          .limit(8)
-          .lean(),
-        Product.find({ isActive: true, isTrending: true })
-          .populate("category", "name slug")
-          .sort({ createdAt: -1 })
-          .limit(8)
-          .lean(),
-        Product.find({ isActive: true, isBestSeller: true })
-          .populate("category", "name slug")
-          .sort({ rating: -1 })
-          .limit(8)
-          .lean(),
-        Product.find({ isActive: true, isNewArrival: true })
-          .populate("category", "name slug")
-          .sort({ createdAt: -1 })
-          .limit(8)
-          .lean(),
-        Product.find({ isActive: true, salePrice: { $exists: true, $gt: 0 } })
-          .populate("category", "name slug")
-          .sort({ discountPercentage: -1 })
-          .limit(4)
-          .lean(),
+        Banner.find({ isActive: true, position: "hero" }).sort({ sortOrder: 1 }).limit(5).lean(),
+        Category.find({ isActive: true }).sort({ sortOrder: 1 }).limit(6).lean(),
+        Product.find({ isActive: true, isFeatured: true }).populate("category", "name slug").sort({ createdAt: -1 }).limit(8).lean(),
+        Product.find({ isActive: true, isTrending: true }).populate("category", "name slug").sort({ createdAt: -1 }).limit(8).lean(),
+        Product.find({ isActive: true, isBestSeller: true }).populate("category", "name slug").sort({ rating: -1 }).limit(8).lean(),
+        Product.find({ isActive: true, isNewArrival: true }).populate("category", "name slug").sort({ createdAt: -1 }).limit(8).lean(),
+        Product.find({ isActive: true, salePrice: { $exists: true, $gt: 0 } }).populate("category", "name slug").sort({ discountPercentage: -1 }).limit(4).lean(),
       ]);
 
     return {
-      banners: JSON.parse(JSON.stringify(banners)),
-      categories: JSON.parse(JSON.stringify(categories)),
-      featuredProducts: JSON.parse(JSON.stringify(featuredProducts)),
-      trendingProducts: JSON.parse(JSON.stringify(trendingProducts)),
-      bestSellers: JSON.parse(JSON.stringify(bestSellers)),
-      newArrivals: JSON.parse(JSON.stringify(newArrivals)),
-      flashSaleProducts: JSON.parse(JSON.stringify(flashSaleProducts)),
+      banners: banners.length ? JSON.parse(JSON.stringify(banners)) : demoBanners,
+      categories: categories.length ? JSON.parse(JSON.stringify(categories)) : demoCategories,
+      featuredProducts: featuredProducts.length ? JSON.parse(JSON.stringify(featuredProducts)) : demoProducts,
+      trendingProducts: trendingProducts.length ? JSON.parse(JSON.stringify(trendingProducts)) : demoProducts.filter((p) => p.isTrending),
+      bestSellers: bestSellers.length ? JSON.parse(JSON.stringify(bestSellers)) : demoProducts.filter((p) => p.isBestSeller),
+      newArrivals: newArrivals.length ? JSON.parse(JSON.stringify(newArrivals)) : demoProducts.filter((p) => p.isNewArrival),
+      flashSaleProducts: flashSaleProducts.length ? JSON.parse(JSON.stringify(flashSaleProducts)) : demoProducts.filter((p) => p.salePrice),
     };
   } catch {
     return {
-      banners: [],
-      categories: [],
-      featuredProducts: [],
-      trendingProducts: [],
-      bestSellers: [],
-      newArrivals: [],
-      flashSaleProducts: [],
+      banners: demoBanners,
+      categories: demoCategories,
+      featuredProducts: demoProducts,
+      trendingProducts: demoProducts.filter((p) => p.isTrending),
+      bestSellers: demoProducts.filter((p) => p.isBestSeller),
+      newArrivals: demoProducts.filter((p) => p.isNewArrival),
+      flashSaleProducts: demoProducts.filter((p) => p.salePrice),
     };
   }
 }
 
 export default async function HomePage() {
-  const {
-    banners,
-    categories,
-    featuredProducts,
-    trendingProducts,
-    bestSellers,
-    newArrivals,
-    flashSaleProducts,
-  } = await getHomeData();
+  const data = await getHomeData();
 
   return (
     <>
-      <HeroSection banners={banners} />
-
+      <HeroSection banners={data.banners} />
       <Suspense fallback={null}>
-        <FeaturedCategories categories={categories} />
+        <FeaturedCategories categories={data.categories} />
       </Suspense>
-
       <Suspense fallback={null}>
-        <ProductSection
-          title="Featured"
-          accent="Products"
-          subtitle="Handpicked"
-          products={featuredProducts}
-          viewAllLink="/categories"
-        />
+        <ProductSection title="Featured" accent="Gear" products={data.featuredProducts} viewAllLink="/categories?filter=featured" />
       </Suspense>
-
+      <LazySections flashSaleProducts={data.flashSaleProducts} />
       <Suspense fallback={null}>
-        <FlashSaleSection products={flashSaleProducts} />
+        <ProductSection title="Trending" accent="Now" products={data.trendingProducts} viewAllLink="/categories?filter=trending" />
       </Suspense>
-
       <Suspense fallback={null}>
-        <ProductSection
-          title="Trending"
-          accent="Now"
-          subtitle="What's Hot"
-          products={trendingProducts}
-          viewAllLink="/categories?filter=trending"
-        />
+        <ProductSection title="Best" accent="Sellers" products={data.bestSellers} viewAllLink="/categories?filter=bestseller" />
       </Suspense>
-
-      <PromoBannerSection />
-
       <Suspense fallback={null}>
-        <ProductSection
-          title="Best"
-          accent="Sellers"
-          subtitle="Top Rated"
-          products={bestSellers}
-          viewAllLink="/categories?filter=bestseller"
-        />
+        <ProductSection title="New" accent="Arrivals" products={data.newArrivals} viewAllLink="/categories?filter=new" />
       </Suspense>
-
-      <Suspense fallback={null}>
-        <ProductSection
-          title="New"
-          accent="Arrivals"
-          subtitle="Just Dropped"
-          products={newArrivals}
-          viewAllLink="/categories?filter=new"
-        />
-      </Suspense>
-
-      <TestimonialsSection />
-
-      <BrandPartnersSection />
     </>
   );
 }

@@ -3,8 +3,15 @@ import dbConnect from "@/lib/db";
 import Banner from "@/models/Banner";
 import { auth } from "@/lib/auth";
 
+function mapBannerToClient(banner: Record<string, unknown>) {
+  return {
+    ...banner,
+    order: banner.sortOrder,
+  };
+}
+
 // GET /api/admin/banners - Get all banners (admin only)
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
 
@@ -14,9 +21,11 @@ export async function GET(request: NextRequest) {
 
     await dbConnect();
 
-    const banners = await Banner.find().sort({ order: 1 }).lean();
+    const banners = await Banner.find().sort({ sortOrder: 1 }).lean();
 
-    return NextResponse.json(banners);
+    return NextResponse.json(
+      banners.map((b) => mapBannerToClient(b as Record<string, unknown>))
+    );
   } catch (error) {
     console.error("Error fetching banners:", error);
     return NextResponse.json(
@@ -39,16 +48,18 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    // Get the highest order number
-    const lastBanner = await Banner.findOne().sort({ order: -1 });
-    const order = lastBanner ? lastBanner.order + 1 : 0;
+    const lastBanner = await Banner.findOne().sort({ sortOrder: -1 });
+    const sortOrder = lastBanner ? lastBanner.sortOrder + 1 : 0;
 
     const banner = await Banner.create({
       ...body,
-      order,
+      sortOrder,
+      position: body.position || "hero",
     });
 
-    return NextResponse.json(banner, { status: 201 });
+    return NextResponse.json(mapBannerToClient(banner.toObject() as Record<string, unknown>), {
+      status: 201,
+    });
   } catch (error) {
     console.error("Error creating banner:", error);
     return NextResponse.json(

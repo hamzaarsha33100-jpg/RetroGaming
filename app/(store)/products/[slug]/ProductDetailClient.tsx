@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type TargetAndTransition } from "framer-motion";
 import {
   ShoppingCart,
   Heart,
@@ -22,12 +22,13 @@ import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { formatPrice } from "@/lib/utils";
 import { Product, Review } from "@/types";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 type ImageTransition = "fade" | "slide" | "zoom" | "flip";
 
 const transitionVariants: Record<
   ImageTransition,
-  { initial: object; animate: object; exit: object }
+  { initial: TargetAndTransition; animate: TargetAndTransition; exit: TargetAndTransition }
 > = {
   fade: {
     initial: { opacity: 0 },
@@ -69,7 +70,8 @@ export default function ProductDetailClient({
 
   const { addItem } = useCartStore();
   const { toggleItem, isInWishlist } = useWishlistStore();
-  const inWishlist = isInWishlist(product._id);
+  const hasMounted = useHasMounted();
+  const inWishlist = hasMounted ? isInWishlist(product._id) : false;
 
   const transition = transitionVariants[product.imageTransition];
 
@@ -115,7 +117,7 @@ export default function ProductDetailClient({
 
   return (
     <div className="page-container py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* Image Gallery */}
         <div className="space-y-4">
           <div className="relative aspect-square rounded-2xl overflow-hidden bg-gaming-surface border border-gaming-border">
@@ -224,7 +226,7 @@ export default function ProductDetailClient({
             <p className="text-neon-cyan text-sm font-gaming uppercase tracking-widest mb-2">
               {product.brand}
             </p>
-            <h1 className="text-3xl font-bold text-white leading-tight">
+            <h1 className="text-2xl md:text-3xl font-bold text-white leading-tight">
               {product.name}
             </h1>
           </div>
@@ -252,7 +254,7 @@ export default function ProductDetailClient({
           )}
 
           {/* Price */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <span className="text-4xl font-bold text-neon-cyan">
               {formatPrice(product.salePrice ?? product.price)}
             </span>
@@ -367,7 +369,7 @@ export default function ProductDetailClient({
           )}
 
           {/* Trust Badges */}
-          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gaming-border">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-gaming-border">
             {[
               { icon: Truck, text: "Free shipping $75+" },
               { icon: Shield, text: "Secure checkout" },
@@ -384,7 +386,7 @@ export default function ProductDetailClient({
 
       {/* Tabs Section */}
       <div className="mt-16">
-        <div className="flex gap-6 border-b border-gaming-border mb-8">
+        <div className="flex gap-6 border-b border-gaming-border mb-8 overflow-x-auto">
           {(["description", "specs", "reviews"] as const).map((tab) => (
             <button
               key={tab}
@@ -444,10 +446,10 @@ export default function ProductDetailClient({
                         key={index}
                         className={index % 2 === 0 ? "bg-gaming-dark/30" : ""}
                       >
-                        <td className="px-6 py-4 text-gaming-textMuted text-sm font-medium w-1/3 border-r border-gaming-border">
+                        <td className="px-4 sm:px-6 py-4 text-gaming-textMuted text-sm font-medium w-1/3 border-r border-gaming-border">
                           {spec.key}
                         </td>
-                        <td className="px-6 py-4 text-gaming-text text-sm">
+                        <td className="px-4 sm:px-6 py-4 text-gaming-text text-sm">
                           {spec.value}
                         </td>
                       </tr>

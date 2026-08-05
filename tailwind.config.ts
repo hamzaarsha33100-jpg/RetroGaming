@@ -123,8 +123,8 @@ const config: Config = {
           "linear-gradient(135deg, rgba(26,26,46,0.8) 0%, rgba(15,15,26,0.9) 100%)",
       },
       fontFamily: {
-        gaming: ["Orbitron", "sans-serif"],
-        body: ["Inter", "sans-serif"],
+        gaming: ["Impact", "Haettenschweiler", "Arial Narrow", "sans-serif"],
+        body: ["var(--font-inter)", "Inter", "Segoe UI", "Arial", "sans-serif"],
       },
       boxShadow: {
         neon: "0 0 5px #00fff5, 0 0 10px #00fff5, 0 0 20px #00fff5",

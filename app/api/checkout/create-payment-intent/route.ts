@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import stripe from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { auth } from "@/lib/auth";
 import { calculateTax, calculateShipping } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const shipping = calculateShipping(subtotal);
     const total = subtotal + tax + shipping - couponDiscount;
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await getStripe().paymentIntents.create({
       amount: Math.round(total * 100),
       currency: "usd",
       metadata: {

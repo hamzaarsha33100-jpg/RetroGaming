@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ShoppingCart,
   Trash2,
   Plus,
   Minus,
@@ -17,6 +17,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, calculateTax, calculateShipping } from "@/lib/utils";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 export default function CartPage() {
   const {
@@ -33,11 +34,14 @@ export default function CartPage() {
     applyCoupon,
     removeCoupon,
   } = useCartStore();
+  const hasMounted = useHasMounted();
 
   const [couponInput, setCouponInput] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
 
-  const subtotal = getSubtotal();
+  const displayItems = hasMounted ? items : [];
+  const displaySavedItems = hasMounted ? savedItems : [];
+  const subtotal = hasMounted ? getSubtotal() : 0;
   const tax = calculateTax(subtotal);
   const shipping = calculateShipping(subtotal);
   const discount = couponDiscount;
@@ -70,7 +74,7 @@ export default function CartPage() {
     }
   };
 
-  if (items.length === 0 && savedItems.length === 0) {
+  if (displayItems.length === 0 && displaySavedItems.length === 0) {
     return (
       <div className="page-container py-24 text-center">
         <motion.div
@@ -104,7 +108,7 @@ export default function CartPage() {
       >
         Shopping <span className="text-gradient">Cart</span>
         <span className="text-gaming-textMuted font-normal text-xl ml-3">
-          ({items.length} items)
+          ({displayItems.length} items)
         </span>
       </motion.h1>
 
@@ -112,7 +116,7 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
           <AnimatePresence>
-            {items.map((item) => (
+            {displayItems.map((item) => (
               <motion.div
                 key={item.productId}
                 initial={{ opacity: 0, height: 0 }}
@@ -122,9 +126,11 @@ export default function CartPage() {
               >
                 <div className="flex gap-5">
                   <Link href={`/products/${item.slug}`} className="flex-shrink-0">
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.name}
+                      width={112}
+                      height={112}
                       className="w-28 h-28 rounded-xl object-cover hover:scale-105 transition-transform duration-200 bg-gaming-dark"
                     />
                   </Link>
@@ -208,20 +214,22 @@ export default function CartPage() {
           </AnimatePresence>
 
           {/* Saved for Later */}
-          {savedItems.length > 0 && (
+          {displaySavedItems.length > 0 && (
             <div className="mt-8">
               <h2 className="text-xl font-gaming font-semibold text-white mb-4">
-                Saved for Later ({savedItems.length})
+                Saved for Later ({displaySavedItems.length})
               </h2>
               <div className="space-y-3">
-                {savedItems.map((item) => (
+                {displaySavedItems.map((item) => (
                   <div
                     key={item.productId}
                     className="gaming-card p-4 flex items-center gap-4"
                   >
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.name}
+                      width={80}
+                      height={80}
                       className="w-20 h-20 rounded-lg object-cover"
                     />
                     <div className="flex-1">

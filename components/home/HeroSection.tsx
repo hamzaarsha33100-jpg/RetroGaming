@@ -1,11 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ShoppingBag, Play } from "lucide-react";
 import { Banner } from "@/types";
-import gsap from "gsap";
+
+const heroParticles = Array.from({ length: 8 }, (_, i) => ({
+  id: `hero-particle-${i}`,
+  width: `${1 + ((i * 17) % 40) / 10}px`,
+  height: `${1 + ((i * 29) % 40) / 10}px`,
+  left: `${(i * 37) % 100}%`,
+  top: `${(i * 53) % 100}%`,
+  backgroundColor:
+    i % 3 === 0 ? "#00fff5" : i % 3 === 1 ? "#9b59b6" : "#ff006e",
+  opacity: 0.3 + ((i * 19) % 70) / 100,
+}));
 
 interface HeroSectionProps {
   banners: Banner[];
@@ -65,25 +76,33 @@ const defaultBanners: Banner[] = [
 export default function HeroSection({ banners }: HeroSectionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const activeBanners = banners.length > 0 ? banners : defaultBanners;
+  const activeBanners = useMemo(
+    () => (banners.length > 0 ? banners : defaultBanners),
+    [banners]
+  );
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const particlesRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (particlesRef.current) {
-      const particles = particlesRef.current.querySelectorAll(".particle");
-      gsap.to(particles, {
-        y: "random(-30, 30)",
-        x: "random(-20, 20)",
-        opacity: "random(0.3, 1)",
-        duration: "random(2, 4)",
-        repeat: -1,
-        yoyo: true,
-        stagger: { each: 0.2, from: "random" },
-        ease: "sine.inOut",
-      });
-    }
-  }, []);
+  const goTo = useCallback(
+    (index: number) => {
+      setCurrentIndex(index);
+      setIsAutoPlaying(false);
+      setTimeout(() => setIsAutoPlaying(true), 8000);
+    },
+    []
+  );
+
+  const goNext = useCallback(
+    () => goTo((currentIndex + 1) % activeBanners.length),
+    [currentIndex, activeBanners.length, goTo]
+  );
+
+  const goPrev = useCallback(
+    () =>
+      goTo(
+        (currentIndex - 1 + activeBanners.length) % activeBanners.length
+      ),
+    [currentIndex, activeBanners.length, goTo]
+  );
 
   useEffect(() => {
     if (isAutoPlaying && activeBanners.length > 1) {
@@ -97,20 +116,10 @@ export default function HeroSection({ banners }: HeroSectionProps) {
     };
   }, [isAutoPlaying, activeBanners.length]);
 
-  const goTo = (index: number) => {
-    setCurrentIndex(index);
-    setIsAutoPlaying(false);
-    setTimeout(() => setIsAutoPlaying(true), 8000);
-  };
-
-  const goNext = () => goTo((currentIndex + 1) % activeBanners.length);
-  const goPrev = () =>
-    goTo((currentIndex - 1 + activeBanners.length) % activeBanners.length);
-
   const current = activeBanners[currentIndex];
 
   return (
-    <section className="relative h-[85vh] min-h-[600px] max-h-[900px] overflow-hidden">
+    <section className="relative min-h-[560px] overflow-hidden sm:h-[78vh] sm:min-h-[620px] sm:max-h-[860px]">
       {/* Background Images */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -121,10 +130,13 @@ export default function HeroSection({ banners }: HeroSectionProps) {
           transition={{ duration: 0.8 }}
           className="absolute inset-0"
         >
-          <img
+          <Image
             src={current.image}
             alt={current.title}
-            className="w-full h-full object-cover"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-gaming-dark via-gaming-dark/70 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-t from-gaming-dark/80 to-transparent" />
@@ -132,25 +144,28 @@ export default function HeroSection({ banners }: HeroSectionProps) {
       </AnimatePresence>
 
       {/* Animated Particles */}
-      <div ref={particlesRef} className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {heroParticles.map((particle) => (
           <div
-            key={i}
-            className="particle absolute rounded-full"
+            key={particle.id}
+            className="absolute rounded-full animate-float"
             style={{
-              width: Math.random() * 4 + 1 + "px",
-              height: Math.random() * 4 + 1 + "px",
-              left: Math.random() * 100 + "%",
-              top: Math.random() * 100 + "%",
-              backgroundColor: i % 3 === 0 ? "#00fff5" : i % 3 === 1 ? "#9b59b6" : "#ff006e",
-              opacity: Math.random() * 0.7 + 0.3,
+              width: particle.width,
+              height: particle.height,
+              left: particle.left,
+              top: particle.top,
+              backgroundColor: particle.backgroundColor,
+              opacity: particle.opacity,
+              animationDelay: `${(particle.id.length % 5) * 0.35}s`,
+              animationDuration: `${3 + (particle.id.length % 4)}s`,
             }}
           />
         ))}
       </div>
 
       {/* Neon grid effect */}
-      <div className="absolute inset-0 pointer-events-none opacity-10"
+      <div
+        className="absolute inset-0 pointer-events-none opacity-10"
         style={{
           backgroundImage: `
             linear-gradient(to right, rgba(0, 255, 245, 0.1) 1px, transparent 1px),
@@ -161,7 +176,7 @@ export default function HeroSection({ banners }: HeroSectionProps) {
       />
 
       {/* Content */}
-      <div className="relative h-full page-container flex items-center">
+      <div className="relative flex min-h-[560px] items-center page-container py-24 sm:h-full sm:min-h-0 sm:py-0">
         <div className="max-w-2xl">
           <AnimatePresence mode="wait">
             <motion.div
@@ -187,15 +202,10 @@ export default function HeroSection({ banners }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="font-gaming font-black text-4xl md:text-6xl lg:text-7xl text-white leading-tight"
+                className="font-gaming font-black text-4xl leading-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
               >
                 {current.title.split(" ").map((word, i) => (
-                  <span
-                    key={i}
-                    className={
-                      i === 0 ? "text-gradient block" : ""
-                    }
-                  >
+                  <span key={i} className={i === 0 ? "text-gradient block" : ""}>
                     {i === 0 ? word : " " + word}
                   </span>
                 ))}
@@ -216,14 +226,14 @@ export default function HeroSection({ banners }: HeroSectionProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="flex flex-wrap gap-4"
+                className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4"
               >
                 {current.ctaLink && current.ctaText && (
                   <Link href={current.ctaLink}>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="btn-primary flex items-center gap-2 text-base px-8 py-4"
+                      className="btn-primary flex items-center justify-center gap-2 text-base px-8 py-4"
                     >
                       <ShoppingBag className="w-5 h-5" />
                       {current.ctaText}
@@ -236,7 +246,7 @@ export default function HeroSection({ banners }: HeroSectionProps) {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="btn-secondary flex items-center gap-2 text-base px-8 py-4"
+                      className="btn-secondary flex items-center justify-center gap-2 text-base px-8 py-4"
                     >
                       <Play className="w-4 h-4" />
                       {current.secondaryCtaText}
@@ -254,13 +264,13 @@ export default function HeroSection({ banners }: HeroSectionProps) {
         <>
           <button
             onClick={goPrev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full glass border border-white/10 text-white hover:border-neon-cyan/50 hover:text-neon-cyan transition-all duration-200 group"
+            className="absolute left-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/10 p-3 text-white transition-all duration-200 glass hover:border-neon-cyan/50 hover:text-neon-cyan sm:block group"
           >
             <ChevronLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform" />
           </button>
           <button
             onClick={goNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full glass border border-white/10 text-white hover:border-neon-cyan/50 hover:text-neon-cyan transition-all duration-200 group"
+            className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/10 p-3 text-white transition-all duration-200 glass hover:border-neon-cyan/50 hover:text-neon-cyan sm:block group"
           >
             <ChevronRight className="w-6 h-6 group-hover:translate-x-0.5 transition-transform" />
           </button>

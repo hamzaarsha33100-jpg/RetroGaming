@@ -5,9 +5,18 @@ import { auth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const admin = searchParams.get("admin") === "true";
+
+    if (admin) {
+      const session = await auth();
+      if (!session || session.user.role !== "admin") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+
     await connectDB();
 
-    const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = Math.min(parseInt(searchParams.get("limit") || "12"), 50);
     const category = searchParams.get("category");
@@ -19,7 +28,7 @@ export async function GET(req: NextRequest) {
     const filter = searchParams.get("filter");
     const search = searchParams.get("search");
 
-    const query: Record<string, unknown> = { isActive: true };
+    const query: Record<string, unknown> = admin ? {} : { isActive: true };
 
     if (category) query.category = category;
     if (brand) query.brand = { $regex: brand, $options: "i" };

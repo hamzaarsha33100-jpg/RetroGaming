@@ -27,6 +27,8 @@ const signupSchema = z
     path: ["confirmPassword"],
   });
 
+const googleAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true";
+
 type SignupForm = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
@@ -66,11 +68,17 @@ export default function SignupPage() {
 
       toast.success("Account created successfully!");
 
-      await signIn("credentials", {
+      const signInResult = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
       });
+
+      if (signInResult?.error) {
+        toast.error("Account created, but auto sign-in failed. Please log in.");
+        router.push("/login");
+        return;
+      }
 
       router.push("/");
       router.refresh();
@@ -92,7 +100,9 @@ export default function SignupPage() {
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-md"
     >
-      <div className="gaming-card p-8">
+      <div className="relative overflow-hidden rounded-2xl border border-neon-cyan/20 bg-gaming-surface/90 p-6 shadow-2xl shadow-neon-cyan/5 backdrop-blur-xl sm:p-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-neon-cyan via-accent to-neon-pink" />
+        <div className="pointer-events-none absolute right-6 top-6 h-20 w-20 rounded-full border border-neon-cyan/10 bg-neon-cyan/5 blur-2xl" />
         <div className="text-center mb-8">
           <h1 className="text-3xl font-gaming font-bold text-white mb-2">
             Create <span className="text-gradient">Account</span>
@@ -102,29 +112,33 @@ export default function SignupPage() {
           </p>
         </div>
 
-        <motion.button
-          onClick={handleGoogleSignIn}
-          disabled={googleLoading}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full flex items-center justify-center gap-3 py-3 rounded-lg border border-gaming-border text-gaming-text hover:border-white/30 hover:bg-white/5 transition-all duration-200 mb-6 disabled:opacity-50"
-        >
-          {googleLoading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Chrome className="w-5 h-5 text-[#4285F4]" />
-          )}
-          Sign up with Google
-        </motion.button>
+        {googleAuthEnabled && (
+          <>
+            <motion.button
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full flex items-center justify-center gap-3 py-3 rounded-lg border border-gaming-border text-gaming-text hover:border-white/30 hover:bg-white/5 transition-all duration-200 mb-6 disabled:opacity-50"
+            >
+              {googleLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Chrome className="w-5 h-5 text-[#4285F4]" />
+              )}
+              Sign up with Google
+            </motion.button>
 
-        <div className="relative mb-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gaming-border" />
-          </div>
-          <div className="relative flex justify-center text-xs text-gaming-textMuted bg-gaming-surface px-4">
-            Or create with email
-          </div>
-        </div>
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gaming-border" />
+              </div>
+              <div className="relative flex justify-center text-xs text-gaming-textMuted bg-gaming-surface px-4">
+                Or create with email
+              </div>
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
@@ -174,7 +188,7 @@ export default function SignupPage() {
               <input
                 {...register("password")}
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder="Create a strong password"
                 autoComplete="new-password"
                 className="input-gaming w-full pl-10 pr-10"
               />
@@ -200,7 +214,7 @@ export default function SignupPage() {
               <input
                 {...register("confirmPassword")}
                 type={showConfirmPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder="Confirm your password"
                 autoComplete="new-password"
                 className="input-gaming w-full pl-10 pr-10"
               />

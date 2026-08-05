@@ -52,9 +52,10 @@ export default function CategoriesClient() {
   const { data: categories = [], isLoading } = useQuery<Category[]>({
     queryKey: ["admin-categories"],
     queryFn: async () => {
-      const res = await fetch("/api/categories");
+      const res = await fetch("/api/categories?admin=true");
       if (!res.ok) throw new Error("Failed to fetch categories");
-      return res.json();
+      const json = await res.json();
+      return json.data ?? [];
     },
   });
 

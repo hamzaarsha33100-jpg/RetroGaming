@@ -29,7 +29,6 @@ const NewsletterSchema = new Schema<INewsletter>(
   { timestamps: true }
 );
 
-NewsletterSchema.index({ email: 1 });
 NewsletterSchema.index({ isActive: 1 });
 
 const Newsletter =

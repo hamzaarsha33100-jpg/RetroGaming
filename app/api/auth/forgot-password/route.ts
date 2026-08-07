@@ -3,9 +3,14 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import { sendOtpEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import crypto from "crypto";
 
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function hashOtp(otp: string): string {
+  return crypto.createHash("sha256").update(otp).digest("hex");
 }
 
 export async function POST(request: NextRequest) {
@@ -36,7 +41,7 @@ export async function POST(request: NextRequest) {
     const otp = generateOtp();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    user.otp = otp;
+    user.otp = hashOtp(otp);
     user.otpExpires = otpExpires;
     user.otpVerified = false;
     await user.save();
@@ -47,8 +52,6 @@ export async function POST(request: NextRequest) {
         name: user.name,
         otp,
       });
-    } else {
-      console.log("OTP for", email, ":", otp);
     }
 
     return NextResponse.json({

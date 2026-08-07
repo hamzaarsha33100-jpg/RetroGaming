@@ -29,7 +29,7 @@ const trendingSearches = [
 ];
 
 export default function SearchModal() {
-  const { isSearchOpen, closeSearch } = useUIStore();
+  const { isSearchOpen, openSearch, closeSearch } = useUIStore();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -52,13 +52,13 @@ export default function SearchModal() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "/" && !isSearchOpen) {
         e.preventDefault();
-        closeSearch();
+        openSearch();
       }
       if (e.key === "Escape") closeSearch();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isSearchOpen, closeSearch]);
+  }, [isSearchOpen, openSearch, closeSearch]);
 
   const performSearch = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim() || searchQuery.length < 2) {

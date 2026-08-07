@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (user.otp !== otp) {
+    if (user.otp !== crypto.createHash("sha256").update(otp).digest("hex")) {
       return NextResponse.json(
         { error: "Invalid verification code" },
         { status: 400 }

@@ -1,15 +1,27 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { formatCurrency, getCurrency } from "@/lib/currencies";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+let activeCurrency = "USD";
+
+export function setActiveCurrency(code: string) {
+  activeCurrency = code;
+}
+
+export function getActiveCurrency(): string {
+  return activeCurrency;
+}
+
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(price);
+  return formatCurrency(price, activeCurrency);
+}
+
+export function getCurrencyInfo() {
+  return getCurrency(activeCurrency);
 }
 
 export function formatDate(date: Date | string): string {
@@ -56,8 +68,11 @@ export function calculateTax(subtotal: number, taxRate: number = 0.08): number {
   return subtotal * taxRate;
 }
 
-export function calculateShipping(subtotal: number): number {
-  if (subtotal >= 75) return 0;
+export function calculateShipping(
+  subtotal: number,
+  freeShippingThreshold: number = 75
+): number {
+  if (subtotal >= freeShippingThreshold) return 0;
   return 9.99;
 }
 

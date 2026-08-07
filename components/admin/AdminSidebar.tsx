@@ -9,6 +9,7 @@ import {
   Users,
   Tag,
   Image,
+  Layout,
   Mail,
   FileText,
   Settings,
@@ -16,6 +17,10 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Timer,
+  Bell,
+  Boxes,
+  Newspaper,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -23,12 +28,17 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/products", label: "Products", icon: Package },
+  { href: "/admin/inventory", label: "Inventory", icon: Boxes },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/categories", label: "Categories", icon: Tag },
+  { href: "/admin/categories", label: "Shop", icon: Tag },
   { href: "/admin/banners", label: "Banners", icon: Image },
+  { href: "/admin/heroes", label: "Heroes", icon: Layout },
   { href: "/admin/coupons", label: "Coupons", icon: Tag },
+  { href: "/admin/countdowns", label: "Countdowns", icon: Timer },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+  { href: "/admin/notifications", label: "Notifications", icon: Bell },
+  { href: "/admin/blog", label: "Blog", icon: Newspaper },
   { href: "/admin/pages", label: "Pages", icon: FileText },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { calculateTax, calculateShipping } from "@/lib/utils";
+import { getSettings } from "@/lib/settings";
 
 const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "";
 const paypalClientSecret = process.env.PAYPAL_CLIENT_SECRET || "";
@@ -63,8 +64,12 @@ export async function POST(req: NextRequest) {
       0
     );
 
-    const tax = calculateTax(subtotal);
-    const shipping = calculateShipping(subtotal);
+    const settings = await getSettings();
+    const taxRate = settings.taxRate / 100;
+    const freeShippingThreshold = settings.freeShippingThreshold;
+
+    const tax = calculateTax(subtotal, taxRate);
+    const shipping = calculateShipping(subtotal, freeShippingThreshold);
     const total = subtotal + tax + shipping - couponDiscount;
 
     const accessToken = await getPayPalAccessToken();

@@ -3,7 +3,11 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import User from "@/models/User";
 import Product from "@/models/Product";
+import Newsletter from "@/models/Newsletter";
+import CountdownTimer from "@/models/CountdownTimer";
+import Coupon from "@/models/Coupon";
 import { auth } from "@/lib/auth";
+import { getSettings } from "@/lib/settings";
 
 export async function GET() {
   try {
@@ -107,6 +111,47 @@ export async function GET() {
       createdAt: { $gte: startOfMonth },
     });
 
+    // === Alerts for the dashboard notification center ===
+    const settings = await getSettings();
+    const threshold = settings.inventory?.lowStockThreshold ?? 5;
+
+    const [lowStockCount, outOfStockCount, pendingOrdersCount, failedPaymentsCount, newSubscribers, endingSoonCount, expiredDiscountsCount] =
+      await Promise.all([
+        Product.countDocuments({
+          stockQuantity: { $gt: 0, $lte: threshold },
+          isActive: true,
+        }),
+        Product.countDocuments({
+          stockQuantity: { $lte: 0 },
+          isActive: true,
+        }),
+        Order.countDocuments({ status: "pending" }),
+        Order.countDocuments({ paymentStatus: "failed" }),
+        Newsletter.countDocuments({
+          isActive: true,
+          createdAt: { $gte: startOfMonth },
+        }),
+        CountdownTimer.countDocuments({
+          isActive: true,
+          isEnded: false,
+          endDate: { $lte: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+        }),
+        Coupon.countDocuments({
+          isActive: true,
+          expiresAt: { $lte: new Date() },
+        }),
+      ]);
+
+    const alerts = {
+      lowStockCount,
+      outOfStockCount,
+      pendingOrdersCount,
+      failedPaymentsCount,
+      newSubscribers,
+      endingSoonCount,
+      expiredDiscountsCount,
+    };
+
     return NextResponse.json({
       success: true,
       data: {
@@ -130,6 +175,7 @@ export async function GET() {
         orderStatusStats,
         topProducts: JSON.parse(JSON.stringify(topProducts)),
         revenueByMonth,
+        alerts,
       },
     });
   } catch (error) {

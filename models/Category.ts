@@ -1,5 +1,12 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+export type CategoryPlatform =
+  | "playstation"
+  | "xbox"
+  | "nintendo"
+  | "pc"
+  | "general";
+
 export interface ICategory extends Document {
   name: string;
   slug: string;
@@ -7,6 +14,7 @@ export interface ICategory extends Document {
   image?: string;
   icon?: string;
   parentCategory?: mongoose.Types.ObjectId;
+  platform: CategoryPlatform;
   isActive: boolean;
   sortOrder: number;
   seoTitle?: string;
@@ -29,6 +37,11 @@ const CategorySchema = new Schema<ICategory>(
     image: String,
     icon: String,
     parentCategory: { type: Schema.Types.ObjectId, ref: "Category" },
+    platform: {
+      type: String,
+      enum: ["playstation", "xbox", "nintendo", "pc", "general"],
+      default: "general",
+    },
     isActive: { type: Boolean, default: true },
     sortOrder: { type: Number, default: 0 },
     seoTitle: String,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { auth } from "@/lib/auth";
 import { calculateTax, calculateShipping } from "@/lib/utils";
+import { getSettings } from "@/lib/settings";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,8 +26,9 @@ export async function POST(req: NextRequest) {
       0
     );
 
-    const tax = calculateTax(subtotal);
-    const shipping = calculateShipping(subtotal);
+    const settings = await getSettings();
+    const tax = calculateTax(subtotal, settings.taxRate / 100);
+    const shipping = calculateShipping(subtotal, settings.freeShippingThreshold);
     const total = subtotal + tax + shipping - couponDiscount;
 
     const paymentIntent = await getStripe().paymentIntents.create({

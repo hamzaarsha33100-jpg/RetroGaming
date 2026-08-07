@@ -14,6 +14,16 @@ export interface IProductSpecification {
   value: string;
 }
 
+export interface IProductVariant {
+  name: string;
+  sku: string;
+  price: number;
+  salePrice?: number;
+  stockQuantity: number;
+  attributes: { key: string; value: string }[];
+  image?: string;
+}
+
 export interface IProduct extends Document {
   name: string;
   slug: string;
@@ -23,7 +33,11 @@ export interface IProduct extends Document {
   salePrice?: number;
   discountPercentage?: number;
   stockQuantity: number;
+  minStockLevel: number;
+  maxStockLevel?: number;
   sku: string;
+  barcode?: string;
+  warehouseLocation?: string;
   description: string;
   shortDescription?: string;
   specifications: IProductSpecification[];
@@ -50,6 +64,8 @@ export interface IProduct extends Document {
   };
   seoTitle?: string;
   seoDescription?: string;
+  variants: IProductVariant[];
+  variantAttributes: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -64,6 +80,16 @@ const ProductImageSchema = new Schema<IProductImage>({
 const ProductSpecificationSchema = new Schema<IProductSpecification>({
   key: { type: String, required: true },
   value: { type: String, required: true },
+});
+
+const ProductVariantSchema = new Schema<IProductVariant>({
+  name: { type: String, required: true },
+  sku: { type: String, required: true },
+  price: { type: Number, required: true, min: 0 },
+  salePrice: { type: Number, min: 0 },
+  stockQuantity: { type: Number, required: true, default: 0, min: 0 },
+  attributes: [{ key: String, value: String }],
+  image: String,
 });
 
 const ProductSchema = new Schema<IProduct>(
@@ -86,7 +112,11 @@ const ProductSchema = new Schema<IProduct>(
     salePrice: { type: Number, min: 0 },
     discountPercentage: { type: Number, min: 0, max: 100 },
     stockQuantity: { type: Number, required: true, default: 0, min: 0 },
+    minStockLevel: { type: Number, default: 5, min: 0 },
+    maxStockLevel: { type: Number, min: 0 },
     sku: { type: String, required: true, unique: true, trim: true },
+    barcode: String,
+    warehouseLocation: String,
     description: { type: String, required: true },
     shortDescription: String,
     specifications: [ProductSpecificationSchema],
@@ -117,6 +147,8 @@ const ProductSchema = new Schema<IProduct>(
     },
     seoTitle: String,
     seoDescription: String,
+    variants: [ProductVariantSchema],
+    variantAttributes: [{ type: String, trim: true }],
   },
   { timestamps: true }
 );

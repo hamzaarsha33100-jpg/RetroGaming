@@ -17,6 +17,7 @@ import { useCartStore } from "@/store/cartStore";
 import { useUIStore } from "@/store/uiStore";
 import { formatPrice } from "@/lib/utils";
 import { useHasMounted } from "@/hooks/useHasMounted";
+import { toast } from "sonner";
 
 export default function CartDrawer() {
   const { isCartOpen, closeCart } = useUIStore();
@@ -35,6 +36,26 @@ export default function CartDrawer() {
   const displayItems = hasMounted ? items : [];
   const displaySavedItems = hasMounted ? savedItems : [];
   const subtotal = hasMounted ? getSubtotal() : 0;
+
+  const handleRemove = (productId: string, name: string) => {
+    removeItem(productId);
+    toast.warning(`Removed from cart: ${name}`);
+  };
+
+  const handleSaveForLater = (productId: string, name: string) => {
+    saveForLater(productId);
+    toast.info(`Saved for later: ${name}`);
+  };
+
+  const handleMoveToCart = (productId: string, name: string) => {
+    moveToCart(productId);
+    toast.success(`Moved to cart: ${name}`);
+  };
+
+  const handleRemoveSaved = (productId: string, name: string) => {
+    removeSavedItem(productId);
+    toast.info(`Removed saved item: ${name}`);
+  };
 
   return (
     <AnimatePresence>
@@ -180,14 +201,18 @@ export default function CartDrawer() {
 
                             <div className="flex items-center gap-1">
                               <button
-                                onClick={() => saveForLater(item.productId)}
+                                onClick={() =>
+                                  handleSaveForLater(item.productId, item.name)
+                                }
                                 className="p-1.5 text-gaming-textMuted hover:text-neon-cyan transition-colors"
                                 title="Save for later"
                               >
                                 <Bookmark className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => removeItem(item.productId)}
+                                onClick={() =>
+                                  handleRemove(item.productId, item.name)
+                                }
                                 className="p-1.5 text-gaming-textMuted hover:text-destructive transition-colors"
                                 title="Remove"
                               >
@@ -230,13 +255,17 @@ export default function CartDrawer() {
                       </div>
                       <div className="flex gap-1">
                         <button
-                          onClick={() => moveToCart(item.productId)}
+                          onClick={() =>
+                            handleMoveToCart(item.productId, item.name)
+                          }
                           className="text-xs text-neon-cyan hover:text-neon-cyan/80 px-2 py-1 border border-neon-cyan/30 rounded transition-colors"
                         >
                           Add
                         </button>
                         <button
-                          onClick={() => removeSavedItem(item.productId)}
+                          onClick={() =>
+                            handleRemoveSaved(item.productId, item.name)
+                          }
                           className="p-1 text-gaming-textMuted hover:text-destructive transition-colors"
                         >
                           <X className="w-3 h-3" />

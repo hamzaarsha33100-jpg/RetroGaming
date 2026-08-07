@@ -7,10 +7,7 @@ import {
   User,
   Package,
   Heart,
-  MapPin,
-  Lock,
   LogOut,
-  Settings,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,21 +36,6 @@ const menuItems = [
     label: "Wishlist",
     href: "/account/wishlist",
     icon: Heart,
-  },
-  {
-    label: "Addresses",
-    href: "/account/addresses",
-    icon: MapPin,
-  },
-  {
-    label: "Security",
-    href: "/account/security",
-    icon: Lock,
-  },
-  {
-    label: "Settings",
-    href: "/account/settings",
-    icon: Settings,
   },
 ];
 

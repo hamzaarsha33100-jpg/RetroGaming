@@ -41,7 +41,7 @@ export async function PUT(
     await dbConnect();
 
     const body = await request.json();
-    const { name, description, image, isActive } = body;
+    const { name, description, image, icon, parentCategory, platform, isActive, sortOrder } = body;
 
     // Generate slug from name if name is being updated
     const slug = name
@@ -57,6 +57,10 @@ export async function PUT(
         ...(name && { name, slug }),
         ...(description !== undefined && { description }),
         ...(image !== undefined && { image }),
+        ...(icon !== undefined && { icon }),
+        ...(parentCategory !== undefined && { parentCategory }),
+        ...(platform !== undefined && { platform }),
+        ...(sortOrder !== undefined && { sortOrder }),
         ...(isActive !== undefined && { isActive }),
       },
       { new: true, runValidators: true }

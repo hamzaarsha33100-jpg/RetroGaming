@@ -17,7 +17,9 @@ export async function GET(req: NextRequest) {
     }
 
     await connectDB();
-    const query = admin ? {} : { isActive: true };
+    const query: Record<string, unknown> = admin ? {} : { isActive: true };
+    const platform = searchParams.get("platform");
+    if (platform) query.platform = platform;
     const categories = await Category.find(query)
       .sort({ sortOrder: 1, name: 1 })
       .lean();

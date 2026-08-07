@@ -7,6 +7,7 @@ export interface INewsletter extends Document {
   subscribedAt: Date;
   unsubscribedAt?: Date;
   source?: string;
+  consent?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -25,6 +26,7 @@ const NewsletterSchema = new Schema<INewsletter>(
     subscribedAt: { type: Date, default: Date.now },
     unsubscribedAt: Date,
     source: String,
+    consent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

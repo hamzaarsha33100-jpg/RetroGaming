@@ -1,78 +1,79 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  Zap,
-  Mail,
-  Phone,
-  MapPin,
-  Twitter,
-  Youtube,
-  Instagram,
-  Facebook,
-  Twitch,
-  Send,
-} from "lucide-react";
+import { Zap, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguageStore } from "@/store/languageStore";
+import { t } from "@/lib/i18n";
 
-const copyrightYear = 2026;
+const copyrightYear = new Date().getFullYear();
+
+const DiscordIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+  </svg>
+);
+
+const TikTokIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15.2a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.98a8.18 8.18 0 0 0 4.76 1.52v-3.4a4.85 4.85 0 0 1-1-.41z" />
+  </svg>
+);
 
 const footerLinks = {
-  company: [
-    { href: "/about", label: "About Us" },
-    { href: "/contact", label: "Contact" },
-    { href: "/about", label: "Blog" },
-    { href: "/contact", label: "Careers" },
-  ],
-  categories: [
-    { href: "/categories", label: "Headsets" },
-    { href: "/categories", label: "Keyboards" },
-    { href: "/categories", label: "Gaming Mice" },
-    { href: "/categories", label: "Controllers" },
-    { href: "/categories", label: "Monitors" },
+  shop: [
+    { href: "/playstation", label: "PlayStation" },
+    { href: "/xbox", label: "Xbox" },
+    { href: "/ps-games", label: "PS Games" },
+    { href: "/categories", label: "All Products" },
+    { href: "/categories?category=", label: "Accessories" },
+    { href: "/categories", label: "PC Gaming" },
   ],
   support: [
-    { href: "/contact", label: "FAQ" },
-    { href: "/contact", label: "Shipping Info" },
-    { href: "/terms", label: "Returns" },
-    { href: "/account/orders", label: "Track Order" },
-    { href: "/contact", label: "Support Center" },
+    { href: "/contact", label: "Contact Us" },
+    { href: "/account/orders", label: "Order Tracking" },
+    { href: "/account/wishlist", label: "Wishlist" },
+    { href: "/cart", label: "Shopping Cart" },
+    { href: "/buy-now", label: "Checkout" },
+    { href: "/search", label: "Search" },
   ],
-  legal: [
-    { href: "/terms", label: "Terms & Conditions" },
+  company: [
+    { href: "/about", label: "About Us" },
     { href: "/privacy", label: "Privacy Policy" },
-    { href: "/privacy", label: "Cookie Policy" },
+    { href: "/terms", label: "Terms of Service" },
+    { href: "/contact", label: "Support" },
+    { href: "/account", label: "My Account" },
+    { href: "/admin", label: "Admin Panel" },
   ],
 };
 
 const socialLinks = [
-  { icon: Twitter, href: "#", label: "Twitter", color: "hover:text-[#1DA1F2]" },
-  {
-    icon: Youtube,
-    href: "#",
-    label: "YouTube",
-    color: "hover:text-[#FF0000]",
-  },
-  {
-    icon: Instagram,
-    href: "#",
-    label: "Instagram",
-    color: "hover:text-[#E1306C]",
-  },
-  {
-    icon: Facebook,
-    href: "#",
-    label: "Facebook",
-    color: "hover:text-[#1877F2]",
-  },
-  { icon: Twitch, href: "#", label: "Twitch", color: "hover:text-[#9146FF]" },
+  { icon: "twitter", href: "#", label: "Twitter", color: "hover:text-[#1DA1F2]" },
+  { icon: "instagram", href: "#", label: "Instagram", color: "hover:text-[#E1306C]" },
+  { icon: "youtube", href: "#", label: "YouTube", color: "hover:text-[#FF0000]" },
+  { icon: "discord", href: "#", label: "Discord", color: "hover:text-[#5865F2]" },
+  { icon: "tiktok", href: "#", label: "TikTok", color: "hover:text-white" },
 ];
 
 export default function Footer() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const language = useLanguageStore((s) => s.language);
+  void language;
+  const [socialUrls, setSocialUrls] = useState<Record<string, string>>({});
+  const [siteName, setSiteName] = useState("Retro Gaming");
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.data?.social) setSocialUrls(json.data.social);
+        if (json.data?.siteName) setSiteName(json.data.siteName);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,16 +104,15 @@ export default function Footer() {
   return (
     <footer className="bg-gaming-darker border-t border-gaming-border mt-20">
       {/* Newsletter Section */}
-      <div className="border-b border-gaming-border py-12">
-        <div className="page-container">
+      <div className="border-b border-gaming-border">
+        <div className="page-container py-12">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div>
-              <h3 className="text-2xl font-gaming font-bold text-white mb-2">
-                Stay <span className="text-gradient">Updated</span>
+            <div className="text-center lg:text-left">
+              <h3 className="text-2xl md:text-3xl font-gaming font-bold text-white mb-2">
+                {t("footer.newsletter.title")} <span className="text-gradient">Game</span>
               </h3>
-              <p className="text-gaming-textMuted">
-                Get the latest deals, new arrivals, and gaming news delivered to
-                your inbox.
+              <p className="text-gaming-textMuted text-sm md:text-base">
+                {t("footer.newsletter.subtitle")}
               </p>
             </div>
 
@@ -126,8 +126,8 @@ export default function Footer() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="input-gaming w-full pl-10"
+                  placeholder={t("footer.emailPlaceholder")}
+                  className="w-full pl-10 pr-4 py-3 bg-gaming-surface border border-gaming-border rounded-lg text-white text-sm placeholder:text-gaming-textMuted focus:outline-none focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan/30 transition-all duration-200"
                   required
                 />
               </div>
@@ -136,146 +136,169 @@ export default function Footer() {
                 disabled={loading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="btn-primary flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary px-6 py-3 flex items-center gap-2 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send className="w-4 h-4" />
-                {loading ? "Subscribing..." : "Subscribe"}
+                {loading ? "..." : t("footer.subscribe")}
               </motion.button>
             </form>
           </div>
         </div>
       </div>
 
-      {/* Main Footer */}
-      <div className="py-16">
-        <div className="page-container">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
-            {/* Brand */}
-            <div className="lg:col-span-2">
-              <Link href="/" className="flex items-center gap-2 mb-5">
-                <Zap className="w-8 h-8 text-neon-cyan" />
-                <span className="font-gaming font-bold text-xl text-white">
-                  RETRO <span className="text-gradient">GAMING</span>
+      {/* Main Footer Links */}
+      <div className="page-container py-12 md:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
+          {/* Column 1: Brand */}
+          <div className="sm:col-span-2 lg:col-span-1">
+            <Link href="/" className="flex items-center gap-2 mb-5">
+              <Zap className="w-7 h-7 text-neon-cyan" />
+              <span className="font-gaming font-bold text-xl text-white">
+                {siteName.split(" ")[0]}{" "}
+                <span className="text-gradient">
+                  {siteName.split(" ").slice(1).join(" ") || "GAMING"}
                 </span>
-              </Link>
-              <p className="text-gaming-textMuted text-sm leading-relaxed mb-6 max-w-xs">
-                Your premier destination for premium gaming accessories. Elevate
-                your gaming experience with cutting-edge technology.
-              </p>
+              </span>
+            </Link>
+            <p className="text-gaming-textMuted text-sm leading-relaxed mb-6 max-w-xs">
+              {t("footer.description")}
+            </p>
 
-              <div className="space-y-2 text-sm text-gaming-textMuted">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-neon-cyan" />
-                  <span>support@retrogaming.com</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-neon-cyan" />
-                  <span>1-800-RETRO-GG</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-neon-cyan" />
-                  <span>San Francisco, CA, USA</span>
-                </div>
-              </div>
+            {/* Social Icons */}
+            <div className="flex items-center gap-3">
+              {socialLinks.map((social) => (
+                <motion.a
+                  key={social.label}
+                  href={socialUrls[social.icon] || social.href || "#"}
+                  target={socialUrls[social.icon] ? "_blank" : undefined}
+                  rel={socialUrls[social.icon] ? "noopener noreferrer" : undefined}
+                  aria-label={social.label}
+                  whileHover={{ scale: 1.15, y: -2 }}
+                  className={`p-2.5 rounded-lg bg-gaming-surface border border-gaming-border text-gaming-textMuted ${social.color} transition-all duration-200 hover:shadow-[0_0_12px_rgba(0,240,255,0.2)]`}
+                >
+                  {social.icon === "twitter" && (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                  )}
+                  {social.icon === "instagram" && (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                    </svg>
+                  )}
+                  {social.icon === "youtube" && (
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                    </svg>
+                  )}
+                  {social.icon === "discord" && <DiscordIcon className="w-4 h-4" />}
+                  {social.icon === "tiktok" && <TikTokIcon className="w-4 h-4" />}
+                </motion.a>
+              ))}
+            </div>
+          </div>
 
-              {/* Social Links */}
-              <div className="flex items-center gap-3 mt-6">
-                {socialLinks.map((social) => (
-                  <motion.a
-                    key={social.label}
-                    href={social.href}
-                    aria-label={social.label}
-                    whileHover={{ scale: 1.2, y: -2 }}
-                    className={`p-2 rounded-lg bg-gaming-surface border border-gaming-border text-gaming-textMuted ${social.color} transition-colors duration-200`}
+          {/* Column 2: Shop */}
+          <div>
+            <h4 className="font-gaming font-semibold text-white mb-4 text-sm uppercase tracking-wider">
+              {t("footer.shop")}
+            </h4>
+            <ul className="space-y-2.5">
+              {footerLinks.shop.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-gaming-textMuted hover:text-neon-cyan text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
                   >
-                    <social.icon className="w-4 h-4" />
-                  </motion.a>
-                ))}
-              </div>
-            </div>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-            {/* Links */}
-            <div>
-              <h4 className="font-gaming font-semibold text-white mb-4 text-sm uppercase tracking-wider">
-                Company
-              </h4>
-              <ul className="space-y-2">
-                {footerLinks.company.map((link) => (
-                  <li key={`${link.href}-${link.label}`}>
-                    <Link
-                      href={link.href}
-                      className="text-gaming-textMuted hover:text-neon-cyan text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Column 3: Support */}
+          <div>
+            <h4 className="font-gaming font-semibold text-white mb-4 text-sm uppercase tracking-wider">
+              {t("footer.support")}
+            </h4>
+            <ul className="space-y-2.5">
+              {footerLinks.support.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    href={link.href}
+                    className="text-gaming-textMuted hover:text-neon-cyan text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-            <div>
-              <h4 className="font-gaming font-semibold text-white mb-4 text-sm uppercase tracking-wider">
-                Categories
-              </h4>
-              <ul className="space-y-2">
-                {footerLinks.categories.map((link) => (
-                  <li key={`${link.href}-${link.label}`}>
-                    <Link
-                      href={link.href}
-                      className="text-gaming-textMuted hover:text-neon-cyan text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-gaming font-semibold text-white mb-4 text-sm uppercase tracking-wider">
-                Support
-              </h4>
-              <ul className="space-y-2">
-                {footerLinks.support.map((link) => (
-                  <li key={`${link.href}-${link.label}`}>
-                    <Link
-                      href={link.href}
-                      className="text-gaming-textMuted hover:text-neon-cyan text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* Column 4: Company */}
+          <div>
+            <h4 className="font-gaming font-semibold text-white mb-4 text-sm uppercase tracking-wider">
+              {t("footer.company")}
+            </h4>
+            <ul className="space-y-2.5">
+              {footerLinks.company.map((link) => (
+                <li
+                  key={link.label}
+                  className={link.href === "/admin" ? "hidden md:block" : ""}
+                >
+                  <Link
+                    href={link.href}
+                    className="text-gaming-textMuted hover:text-neon-cyan text-sm transition-colors duration-200 hover:translate-x-1 inline-block"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gaming-border py-6">
-        <div className="page-container flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-gaming-textMuted text-sm">
-            © {copyrightYear} Retro Gaming. All rights reserved.
-          </p>
+      <div className="border-t border-gaming-border">
+        <div className="page-container py-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-gaming-textMuted text-xs">
+              &copy; {copyrightYear} Retro Gaming. {t("footer.rights")}
+            </p>
 
-          <div className="flex items-center gap-4">
-            {footerLinks.legal.map((link) => (
-              <Link
-                key={`${link.href}-${link.label}`}
-                href={link.href}
-                className="text-gaming-textMuted hover:text-neon-cyan text-xs transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
+            {/* Payment Icons */}
+            <div className="flex items-center gap-3">
+              <span className="text-gaming-textMuted text-xs">Payments:</span>
+              <div className="flex items-center gap-2">
+                {/* Visa */}
+                <div className="px-2 py-1 bg-gaming-surface border border-gaming-border rounded text-[10px] font-bold text-white tracking-wide">
+                  VISA
+                </div>
+                {/* Mastercard */}
+                <div className="px-2 py-1 bg-gaming-surface border border-gaming-border rounded text-[10px] font-bold text-white tracking-wide">
+                  MC
+                </div>
+                {/* PayPal */}
+                <div className="px-2 py-1 bg-gaming-surface border border-gaming-border rounded text-[10px] font-bold text-[#00457C] bg-white tracking-wide">
+                  PayPal
+                </div>
+                {/* Stripe */}
+                <div className="px-2 py-1 bg-gaming-surface border border-gaming-border rounded text-[10px] font-bold text-[#635BFF] tracking-wide">
+                  Stripe
+                </div>
+                {/* Apple Pay */}
+                <div className="px-2 py-1 bg-gaming-surface border border-gaming-border rounded text-[10px] font-bold text-white tracking-wide">
+                  Pay
+                </div>
+              </div>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-gaming-textMuted text-xs">Payments by</span>
-            <span className="text-white text-xs font-medium">Stripe</span>
-            <span className="text-gaming-textMuted text-xs">·</span>
-            <span className="text-gaming-textMuted text-xs">🇺🇸 United States</span>
+            {/* SSL Badge */}
+            <div className="flex items-center gap-1.5 text-gaming-textMuted">
+              <Lock className="w-3.5 h-3.5 text-green-400" />
+              <span className="text-xs">Secured by SSL</span>
+            </div>
           </div>
         </div>
       </div>

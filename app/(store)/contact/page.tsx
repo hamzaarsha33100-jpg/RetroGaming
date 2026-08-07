@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import ContactForm from "./ContactForm";
-import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
+import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = {
   title: "Contact Us | Retro Gaming",
@@ -12,34 +13,32 @@ export const metadata: Metadata = {
   },
 };
 
-const contactInfo = [
-  {
-    icon: Mail,
-    title: "Email Us",
-    value: "support@retrogaming.com",
-    description: "We'll respond within 24 hours",
-  },
-  {
-    icon: Phone,
-    title: "Call Us",
-    value: "+1 (555) 123-4567",
-    description: "Mon-Fri, 9AM-6PM EST",
-  },
-  {
-    icon: MapPin,
-    title: "Visit Us",
-    value: "123 Gaming Street, San Francisco, CA 94102",
-    description: "United States",
-  },
-  {
-    icon: Clock,
-    title: "Business Hours",
-    value: "Monday - Friday: 9AM - 6PM EST",
-    description: "Saturday: 10AM - 4PM EST",
-  },
-];
+export const dynamic = "force-dynamic";
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const settings = await getSettings();
+
+  const contactInfo = [
+    {
+      icon: Mail,
+      title: "Email Us",
+      value: settings.supportEmail,
+      description: "We'll respond within 24 hours",
+    },
+    {
+      icon: Phone,
+      title: "Call Us",
+      value: settings.contactPhone,
+      description: settings.businessHours,
+    },
+    {
+      icon: MapPin,
+      title: "Visit Us",
+      value: settings.contactAddress,
+      description: "United States",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950">
       <div className="container mx-auto px-4 py-12">

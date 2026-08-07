@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Settings, { DEFAULT_SETTINGS } from "@/models/Settings";
 import { auth } from "@/lib/auth";
+import { invalidateSettingsCache } from "@/lib/settings";
 
 async function getSettings() {
   await connectDB();
@@ -44,14 +45,26 @@ export async function PUT(req: NextRequest) {
       {
         siteName: body.siteName,
         supportEmail: body.supportEmail,
+        contactPhone: body.contactPhone,
+        contactAddress: body.contactAddress,
+        businessHours: body.businessHours,
+        social: body.social ?? {},
         freeShippingThreshold: body.freeShippingThreshold,
         taxRate: body.taxRate,
         maintenanceMode: body.maintenanceMode,
         allowRegistrations: body.allowRegistrations,
         emailNotifications: body.emailNotifications,
+        email: body.email ?? {},
+        newsletter: body.newsletter ?? {},
+        notifications: body.notifications ?? {},
+        countdown: body.countdown ?? {},
+        inventory: body.inventory ?? {},
+        seo: body.seo ?? {},
       },
       { new: true, upsert: true, runValidators: true }
     );
+
+    invalidateSettingsCache();
 
     return NextResponse.json({
       success: true,

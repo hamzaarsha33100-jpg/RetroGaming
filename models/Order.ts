@@ -59,6 +59,7 @@ export interface IOrder extends Document {
   timeline: IOrderTimeline[];
   estimatedDelivery?: Date;
   deliveredAt?: Date;
+  stockRestored: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -130,6 +131,7 @@ const OrderSchema = new Schema<IOrder>(
     timeline: [OrderTimelineSchema],
     estimatedDelivery: Date,
     deliveredAt: Date,
+    stockRestored: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

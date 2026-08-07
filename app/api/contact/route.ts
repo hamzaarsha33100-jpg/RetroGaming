@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { sendContactEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import { createAdminNotification } from "@/lib/notifications";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -37,6 +38,15 @@ export async function POST(request: NextRequest) {
         message,
       });
     }
+
+    // Notify admin in-app
+    createAdminNotification({
+      type: "contact_message",
+      title: "New customer message",
+      message: `${name} (${email}) sent: "${subject}"`,
+      severity: "info",
+      data: { name, email, subject },
+    }).catch(() => undefined);
 
     return NextResponse.json({
       message: "Message sent successfully",

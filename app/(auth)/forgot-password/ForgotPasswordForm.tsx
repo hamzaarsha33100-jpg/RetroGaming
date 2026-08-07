@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2, Mail, CheckCircle } from "lucide-react";
+import Link from "next/link";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -108,9 +109,9 @@ export default function ForgotPasswordForm() {
 
       <p className="text-center text-sm text-gaming-textMuted">
         Remember your password?{" "}
-        <a href="/login" className="text-neon-cyan hover:underline">
+        <Link href="/login" className="text-neon-cyan hover:underline">
           Sign In
-        </a>
+        </Link>
       </p>
     </form>
   );

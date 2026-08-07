@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2, ArrowLeft, Upload, Trash2 } from "lucide-react";
+import { Loader2, ArrowLeft, Upload, Trash2, Plus } from "lucide-react";
 import { slugify } from "@/lib/utils";
 
 const productSchema = z.object({
@@ -19,7 +19,11 @@ const productSchema = z.object({
   price: z.number().min(0, "Price must be positive"),
   salePrice: z.union([z.number().min(0), z.nan()]).optional().transform((v) => (Number.isNaN(v) ? undefined : v)),
   stockQuantity: z.number().min(0, "Stock must be 0 or more"),
+  minStockLevel: z.number().min(0, "Min stock must be 0 or more"),
+  maxStockLevel: z.union([z.number().min(0), z.nan()]).optional().transform((v) => (Number.isNaN(v) ? undefined : v)),
   sku: z.string().min(1, "SKU is required"),
+  barcode: z.string().optional(),
+  warehouseLocation: z.string().optional(),
   description: z.string().min(10, "Description is required"),
   shortDescription: z.string().optional(),
   mainImage: z.string().url("Valid image URL required"),
@@ -29,6 +33,16 @@ const productSchema = z.object({
   isNewArrival: z.boolean(),
   isBestSeller: z.boolean(),
   isActive: z.boolean(),
+  variantAttributes: z.array(z.string()).optional(),
+  variants: z.array(z.object({
+    name: z.string().min(1, "Variant name is required"),
+    sku: z.string().min(1, "SKU is required"),
+    price: z.number().min(0, "Price must be positive"),
+    salePrice: z.number().min(0).optional(),
+    stockQuantity: z.number().min(0, "Stock must be 0 or more"),
+    attributes: z.array(z.object({ key: z.string(), value: z.string() })),
+    image: z.string().url("Valid URL required").optional(),
+  })).optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -50,6 +64,11 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [originalImageFileId, setOriginalImageFileId] = useState<string>();
+  const [variantAttributesString, setVariantAttributesString] = useState(initialData?.variantAttributes?.join(", ") || "");
+  const [variants, setVariants] = useState<Array<{
+    name: string; sku: string; price: number; salePrice?: number;
+    stockQuantity: number; attributes: { key: string; value: string }[]; image?: string;
+  }>>(initialData?.variants || []);
   const isEditing = !!productId;
 
   const {
@@ -66,6 +85,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
       isNewArrival: false,
       isBestSeller: false,
       isActive: true,
+      minStockLevel: 5,
+      variantAttributes: [],
+      variants: [],
       ...initialData,
     },
   });
@@ -102,7 +124,11 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           setValue("price", p.price);
           setValue("salePrice", p.salePrice ?? null);
           setValue("stockQuantity", p.stockQuantity);
+          setValue("minStockLevel", p.minStockLevel ?? 5);
+          setValue("maxStockLevel", p.maxStockLevel ?? null);
           setValue("sku", p.sku);
+          setValue("barcode", p.barcode || "");
+          setValue("warehouseLocation", p.warehouseLocation || "");
           setValue("description", p.description);
           setValue("shortDescription", p.shortDescription || "");
           setValue("mainImage", p.mainImage);
@@ -113,6 +139,9 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
           setValue("isNewArrival", p.isNewArrival);
           setValue("isBestSeller", p.isBestSeller);
           setValue("isActive", p.isActive);
+          setValue("variantAttributes", p.variantAttributes || []);
+          setVariantAttributesString(p.variantAttributes?.join(", ") || "");
+          setVariants(p.variants || []);
         }
       })
       .catch(() => toast.error("Failed to load product"))
@@ -178,6 +207,42 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
     }
   };
 
+  const attributeKeys = variantAttributesString
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const addVariant = () => {
+    const newAttrs: { key: string; value: string }[] = attributeKeys.map((k) => ({ key: k, value: "" }));
+    setVariants([
+      ...variants,
+      { name: "", sku: "", price: 0, salePrice: 0, stockQuantity: 0, attributes: newAttrs, image: "" },
+    ]);
+  };
+
+  const removeVariant = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index));
+  };
+
+  const updateVariant = (index: number, field: string, value: string | number) => {
+    setVariants(
+      variants.map((v, i) => (i === index ? { ...v, [field]: value } : v))
+    );
+  };
+
+  const updateVariantAttribute = (index: number, key: string, value: string) => {
+    setVariants(
+      variants.map((v, i) => {
+        if (i !== index) return v;
+        const existing = v.attributes.find((a) => a.key === key);
+        if (existing) {
+          return { ...v, attributes: v.attributes.map((a) => a.key === key ? { ...a, value } : a) };
+        }
+        return { ...v, attributes: [...v.attributes, { key, value }] };
+      })
+    );
+  };
+
   const onSubmit = async (data: ProductFormData) => {
     setSaving(true);
     try {
@@ -185,6 +250,8 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
         ...data,
         salePrice: data.salePrice || undefined,
         shortDescription: data.shortDescription || undefined,
+        variantAttributes: attributeKeys,
+        variants: variants.filter((v) => v.name && v.sku),
       };
 
       const url = isEditing ? `/api/products/${productId}` : "/api/products";
@@ -313,6 +380,48 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
                 <p className="text-destructive text-sm mt-1">{errors.stockQuantity.message}</p>
               )}
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gaming-textMuted mb-1">Minimum Stock Level</label>
+                <input
+                  type="number"
+                  min={0}
+                  {...register("minStockLevel", { valueAsNumber: true })}
+                  className="input-gaming w-full"
+                  placeholder="Alert when stock drops below"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gaming-textMuted mb-1">Maximum Stock Level</label>
+                <input
+                  type="number"
+                  min={0}
+                  {...register("maxStockLevel", { valueAsNumber: true })}
+                  className="input-gaming w-full"
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gaming-textMuted mb-1">Barcode</label>
+                <input
+                  {...register("barcode")}
+                  className="input-gaming w-full"
+                  placeholder="Optional (UPC/EAN)"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-gaming-textMuted mb-1">Warehouse Location</label>
+                <input
+                  {...register("warehouseLocation")}
+                  className="input-gaming w-full"
+                  placeholder="e.g. Aisle B, Shelf 3"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="gaming-card p-6 space-y-4">
@@ -387,6 +496,165 @@ export default function ProductForm({ productId, initialData }: ProductFormProps
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="gaming-card p-6 space-y-4">
+        <h2 className="text-lg font-gaming font-semibold text-white">Variants</h2>
+        <p className="text-xs text-gaming-textMuted">
+          Optionally add product variants (e.g. different editions, colors, storage sizes). Each variant can have its own SKU, price, and stock.
+        </p>
+
+        <div>
+          <label className="block text-sm text-gaming-textMuted mb-1">
+            Variant Attributes
+          </label>
+          <input
+            type="text"
+            value={variantAttributesString}
+            onChange={(e) => {
+              const val = e.target.value;
+              setVariantAttributesString(val);
+              const keys = val.split(",").map((s) => s.trim()).filter(Boolean);
+              setValue("variantAttributes", keys, { shouldDirty: true });
+              setVariants((prev) =>
+                prev.map((v) => {
+                  const newAttrs: { key: string; value: string }[] = keys.map((k) => {
+                    const existing = v.attributes.find((a) => a.key === k);
+                    return { key: k, value: existing?.value || "" };
+                  });
+                  return { ...v, attributes: newAttrs };
+                })
+              );
+            }}
+            className="input-gaming w-full"
+            placeholder="e.g. Color, Storage, Edition"
+          />
+          <p className="text-xs text-gaming-textMuted mt-1">
+            Comma-separated keys. These appear as attribute fields on each variant.
+          </p>
+        </div>
+
+        {variants.length > 0 && (
+          <div className="space-y-4">
+            {variants.map((variant, index) => (
+              <div
+                key={index}
+                className="rounded-lg border border-gaming-border bg-gaming-dark/50 p-4 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gaming-text">
+                    Variant {index + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeVariant(index)}
+                    className="text-gaming-textMuted hover:text-destructive transition-colors flex items-center gap-1 text-xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Remove
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-gaming-textMuted mb-1">Name *</label>
+                    <input
+                      type="text"
+                      value={variant.name}
+                      onChange={(e) => updateVariant(index, "name", e.target.value)}
+                      className="input-gaming w-full"
+                      placeholder="e.g. Disc Edition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gaming-textMuted mb-1">SKU *</label>
+                    <input
+                      type="text"
+                      value={variant.sku}
+                      onChange={(e) => updateVariant(index, "sku", e.target.value)}
+                      className="input-gaming w-full font-mono"
+                      placeholder="e.g. PS5-DISC-001"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs text-gaming-textMuted mb-1">Price ($) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={variant.price || ""}
+                      onChange={(e) => updateVariant(index, "price", parseFloat(e.target.value) || 0)}
+                      className="input-gaming w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gaming-textMuted mb-1">Sale Price ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={variant.salePrice || ""}
+                      onChange={(e) => updateVariant(index, "salePrice", parseFloat(e.target.value) || 0)}
+                      className="input-gaming w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gaming-textMuted mb-1">Stock *</label>
+                    <input
+                      type="number"
+                      value={variant.stockQuantity || ""}
+                      onChange={(e) => updateVariant(index, "stockQuantity", parseInt(e.target.value) || 0)}
+                      className="input-gaming w-full"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-gaming-textMuted mb-1">Image URL</label>
+                  <input
+                    type="text"
+                    value={variant.image}
+                    onChange={(e) => updateVariant(index, "image", e.target.value)}
+                    className="input-gaming w-full"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                {attributeKeys.length > 0 && (
+                  <div>
+                    <label className="block text-xs text-gaming-textMuted mb-1">Attributes</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {attributeKeys.map((key) => (
+                        <div key={key} className="flex items-center gap-2">
+                          <span className="text-xs text-gaming-textMuted whitespace-nowrap min-w-[80px]">
+                            {key}:
+                          </span>
+                          <input
+                            type="text"
+                            value={variant.attributes.find((a) => a.key === key)?.value || ""}
+                            onChange={(e) => updateVariantAttribute(index, key, e.target.value)}
+                            className="input-gaming w-full text-sm"
+                            placeholder={key}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={addVariant}
+          className="flex items-center gap-2 text-sm text-neon-cyan hover:text-neon-cyan/80 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add Variant
+        </button>
       </div>
 
       <div className="flex items-center gap-3">

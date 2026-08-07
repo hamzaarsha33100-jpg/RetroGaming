@@ -4,7 +4,6 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Review from "@/models/Review";
 import ProductDetailClient from "./ProductDetailClient";
-import ProductSection from "@/components/home/ProductSection";
 
 export const dynamic = "force-dynamic";
 
@@ -74,18 +73,10 @@ export default async function ProductPage({ params }: Props) {
   ]);
 
   return (
-    <>
-      <ProductDetailClient product={product} reviews={reviews} />
-      {relatedProducts.length > 0 && (
-        <div className="mt-8">
-          <ProductSection
-            title="Related"
-            accent="Products"
-            subtitle="You May Also Like"
-            products={relatedProducts}
-          />
-        </div>
-      )}
-    </>
+    <ProductDetailClient
+      product={product}
+      reviews={reviews}
+      relatedProducts={relatedProducts}
+    />
   );
 }

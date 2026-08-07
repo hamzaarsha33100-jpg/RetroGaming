@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice, calculateTax, calculateShipping } from "@/lib/utils";
 import { useHasMounted } from "@/hooks/useHasMounted";
+import { useQuery } from "@tanstack/react-query";
 
 export default function CartPage() {
   const {
@@ -39,11 +40,24 @@ export default function CartPage() {
   const [couponInput, setCouponInput] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
 
+  const { data: settingsData } = useQuery({
+    queryKey: ["storeSettings"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings");
+      const json = await res.json();
+      return json.data ?? null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const taxRate = settingsData ? settingsData.taxRate / 100 : 0.08;
+  const freeShippingThreshold = settingsData?.freeShippingThreshold ?? 75;
+
   const displayItems = hasMounted ? items : [];
   const displaySavedItems = hasMounted ? savedItems : [];
   const subtotal = hasMounted ? getSubtotal() : 0;
-  const tax = calculateTax(subtotal);
-  const shipping = calculateShipping(subtotal);
+  const tax = calculateTax(subtotal, taxRate);
+  const shipping = calculateShipping(subtotal, freeShippingThreshold);
   const discount = couponDiscount;
   const total = subtotal + tax + shipping - discount;
 
@@ -280,7 +294,7 @@ export default function CartPage() {
                 </span>
               </div>
               <div className="flex justify-between text-gaming-textMuted">
-                <span>Tax (8%)</span>
+                <span>{`Tax (${Math.round(taxRate * 100)}%)`}</span>
                 <span className="text-gaming-text">{formatPrice(tax)}</span>
               </div>
               {discount > 0 && (
@@ -293,7 +307,7 @@ export default function CartPage() {
 
             {shipping > 0 && (
               <p className="text-xs text-gaming-textMuted mb-4 p-3 bg-neon-cyan/5 border border-neon-cyan/10 rounded-lg">
-                Add {formatPrice(75 - subtotal)} more for free shipping!
+                Add {formatPrice(freeShippingThreshold - subtotal)} more for free shipping!
               </p>
             )}
 
@@ -327,7 +341,10 @@ export default function CartPage() {
                   <span>{couponCode}</span>
                 </div>
                 <button
-                  onClick={removeCoupon}
+                  onClick={() => {
+                    removeCoupon();
+                    toast.info("Coupon removed");
+                  }}
                   className="text-gaming-textMuted hover:text-destructive transition-colors"
                 >
                   <X className="w-4 h-4" />

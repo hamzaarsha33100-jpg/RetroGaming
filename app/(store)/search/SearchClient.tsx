@@ -27,7 +27,8 @@ export default function SearchClient() {
         `/api/products/search?q=${encodeURIComponent(activeQuery)}`
       );
       if (!res.ok) throw new Error("Search failed");
-      return res.json();
+      const data = await res.json();
+      return data.success ? data.data : [];
     },
     enabled: activeQuery.trim().length > 0,
   });

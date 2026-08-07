@@ -6,6 +6,10 @@ export interface IBanner extends Document {
   description?: string;
   image: string;
   mobileImage?: string;
+  images: { url: string; alt?: string; fileId?: string }[];
+  overlayColor: string;
+  overlayOpacity: number;
+  badge?: string;
   ctaText?: string;
   ctaLink?: string;
   secondaryCtaText?: string;
@@ -26,6 +30,16 @@ const BannerSchema = new Schema<IBanner>(
     description: String,
     image: { type: String, required: true },
     mobileImage: String,
+    images: [
+      {
+        url: { type: String, required: true },
+        alt: String,
+        fileId: String,
+      },
+    ],
+    overlayColor: { type: String, default: "#000000" },
+    overlayOpacity: { type: Number, default: 0.5 },
+    badge: String,
     ctaText: String,
     ctaLink: String,
     secondaryCtaText: String,

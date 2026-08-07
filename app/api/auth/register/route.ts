@@ -4,6 +4,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import { sendWelcomeEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import { createAdminNotification } from "@/lib/notifications";
 
 const registerSchema = z.object({
   name: z.string().min(2).max(50),
@@ -52,6 +53,16 @@ export async function POST(req: NextRequest) {
 
     // Send welcome email (non-blocking)
     sendWelcomeEmail({ to: email, name, email }).catch(console.error);
+
+    // Notify admin of new signup
+    createAdminNotification({
+      type: "new_subscriber",
+      title: "New customer registered",
+      message: `${name} (${email}) created an account.`,
+      severity: "success",
+      link: "/admin/customers",
+      data: { userId: user._id.toString(), email },
+    }).catch(() => undefined);
 
     return NextResponse.json(
       {

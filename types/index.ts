@@ -24,6 +24,16 @@ declare module "@auth/core/jwt" {
   }
 }
 
+export interface ProductVariant {
+  name: string;
+  sku: string;
+  price: number;
+  salePrice?: number;
+  stockQuantity: number;
+  attributes: { key: string; value: string }[];
+  image?: string;
+}
+
 export interface Product {
   _id: string;
   name: string;
@@ -50,6 +60,8 @@ export interface Product {
   isBestSeller: boolean;
   isActive: boolean;
   isOutOfStock: boolean;
+  variants: ProductVariant[];
+  variantAttributes: string[];
   rating: number;
   reviewCount: number;
   views: number;
@@ -75,8 +87,11 @@ export type ProductCardData = Pick<
   | "isNewArrival"
   | "isBestSeller"
   | "isOutOfStock"
+  | "variants"
+  | "variantAttributes"
   | "rating"
   | "reviewCount"
+  | "tags"
 >;
 
 export interface Category {
@@ -86,6 +101,8 @@ export interface Category {
   description?: string;
   image?: string;
   icon?: string;
+  platform?: "playstation" | "xbox" | "nintendo" | "pc" | "general";
+  parentCategory?: string | Category;
   isActive: boolean;
   sortOrder: number;
   createdAt: string;
@@ -184,6 +201,10 @@ export interface Banner {
   description?: string;
   image: string;
   mobileImage?: string;
+  images?: { url: string; alt?: string }[];
+  overlayColor?: string;
+  overlayOpacity?: number;
+  badge?: string;
   ctaText?: string;
   ctaLink?: string;
   secondaryCtaText?: string;

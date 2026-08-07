@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
+import Newsletter from "@/models/Newsletter";
 import { auth } from "@/lib/auth";
+import { sendNewProductEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   try {
@@ -45,7 +47,11 @@ export async function GET(req: NextRequest) {
     if (filter === "sale") query.salePrice = { $exists: true, $gt: 0 };
 
     if (search) {
-      query.$text = { $search: search };
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { brand: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
     }
 
     const skip = (page - 1) * limit;
@@ -87,6 +93,33 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const product = await Product.create(body);
+
+    if (body.isActive && product.isNewArrival) {
+      try {
+        const subscribers = await Newsletter.find({
+          isActive: true,
+          "consent.newProduct": true,
+        })
+          .select("email name")
+          .limit(1000)
+          .lean();
+        if (subscribers.length > 0) {
+          await Promise.allSettled(
+            subscribers.map((s) =>
+              sendNewProductEmail({
+                to: s.email,
+                name: s.name,
+                productName: product.name,
+                productImage: product.mainImage,
+                productUrl: `/products/${product.slug}`,
+              })
+            )
+          );
+        }
+      } catch (err) {
+        console.error("New product emails failed:", err);
+      }
+    }
 
     return NextResponse.json(
       { success: true, data: JSON.parse(JSON.stringify(product)) },

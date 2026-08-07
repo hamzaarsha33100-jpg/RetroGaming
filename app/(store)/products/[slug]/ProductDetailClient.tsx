@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, type TargetAndTransition } from "framer-motion";
 import {
   ShoppingCart,
   Heart,
-  Share2,
   Star,
   ChevronLeft,
   ChevronRight,
@@ -16,6 +17,12 @@ import {
   RefreshCw,
   Check,
   Package,
+  Copy,
+  Zap,
+  Eye,
+  Bell,
+  Mail,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useCartStore } from "@/store/cartStore";
@@ -23,6 +30,7 @@ import { useWishlistStore } from "@/store/wishlistStore";
 import { formatPrice } from "@/lib/utils";
 import { Product, Review } from "@/types";
 import { useHasMounted } from "@/hooks/useHasMounted";
+import ProductCard from "@/components/products/ProductCard";
 
 type ImageTransition = "fade" | "slide" | "zoom" | "flip";
 
@@ -55,10 +63,13 @@ const transitionVariants: Record<
 export default function ProductDetailClient({
   product,
   reviews,
+  relatedProducts = [],
 }: {
   product: Product;
   reviews: Review[];
+  relatedProducts?: Product[];
 }) {
+  const router = useRouter();
   const allImages = [
     { url: product.mainImage, alt: product.name },
     ...product.galleryImages,
@@ -67,6 +78,10 @@ export default function ProductDetailClient({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"description" | "specs" | "reviews">("description");
+  const [notifyEmail, setNotifyEmail] = useState("");
+  const [notifyLoading, setNotifyLoading] = useState(false);
+  const [notifyType, setNotifyType] = useState<"back_in_stock" | "price_drop">("back_in_stock");
+  const [notifyDone, setNotifyDone] = useState(false);
 
   const { addItem } = useCartStore();
   const { toggleItem, isInWishlist } = useWishlistStore();
@@ -98,6 +113,27 @@ export default function ProductDetailClient({
     });
   };
 
+  const handleBuyNow = () => {
+    if (product.isOutOfStock) {
+      toast.error("This product is out of stock");
+      return;
+    }
+
+    const buyNowData = {
+      productId: product._id,
+      name: product.name,
+      slug: product.slug,
+      image: product.mainImage,
+      price: product.price,
+      salePrice: product.salePrice,
+      quantity,
+      maxQuantity: product.stockQuantity,
+    };
+
+    localStorage.setItem("buyNowProduct", JSON.stringify(buyNowData));
+    router.push("/buy-now");
+  };
+
   const handleWishlist = () => {
     toggleItem({
       productId: product._id,
@@ -112,15 +148,52 @@ export default function ProductDetailClient({
     toast.success(inWishlist ? "Removed from wishlist" : "Added to wishlist!");
   };
 
+  const handleShare = () => {    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
+  const handleNotify = async () => {
+    if (!notifyEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(notifyEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+    setNotifyLoading(true);
+    try {
+      const res = await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: notifyType,
+          email: notifyEmail,
+          productId: product._id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotifyDone(true);
+        toast.success(data.message || "You'll be notified!");
+      } else {
+        toast.error(data.error || "Failed to save notification request");
+      }
+    } catch {
+      toast.error("Failed to save notification request");
+    } finally {
+      setNotifyLoading(false);
+    }
+  };
+
   const categoryName =
     typeof product.category === "object" ? product.category.name : "";
 
   return (
     <div className="page-container py-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-        {/* Image Gallery */}
+        {/* Image Gallery - Left */}
         <div className="space-y-4">
-          <div className="relative aspect-square rounded-2xl overflow-hidden bg-gaming-surface border border-gaming-border">
+          {/* Main Image */}
+          <div className="relative aspect-square rounded-2xl overflow-hidden bg-gaming-surface border border-gaming-border group">
             <AnimatePresence mode="wait">
               <motion.img
                 key={selectedImageIndex}
@@ -143,7 +216,7 @@ export default function ProductDetailClient({
                       (prev) => (prev - 1 + allImages.length) % allImages.length
                     )
                   }
-                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full glass border border-white/10 text-white hover:border-neon-cyan/50"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full glass border border-white/10 text-white hover:border-neon-cyan/50 transition-all"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -153,11 +226,18 @@ export default function ProductDetailClient({
                       (prev) => (prev + 1) % allImages.length
                     )
                   }
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full glass border border-white/10 text-white hover:border-neon-cyan/50"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full glass border border-white/10 text-white hover:border-neon-cyan/50 transition-all"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </>
+            )}
+
+            {/* Image counter */}
+            {allImages.length > 1 && (
+              <div className="absolute bottom-3 right-3 px-3 py-1 rounded-full glass border border-white/10 text-white text-xs">
+                {selectedImageIndex + 1} / {allImages.length}
+              </div>
             )}
 
             {/* Badges */}
@@ -185,15 +265,15 @@ export default function ProductDetailClient({
 
           {/* Thumbnails */}
           {allImages.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {allImages.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
                   className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
                     selectedImageIndex === index
-                      ? "border-neon-cyan shadow-neon"
-                      : "border-gaming-border hover:border-neon-cyan/50"
+                      ? "border-neon-cyan shadow-[0_0_10px_rgba(0,240,255,0.3)]"
+                      : "border-gaming-border hover:border-neon-cyan/50 opacity-60 hover:opacity-100"
                   }`}
                 >
                   <img
@@ -207,19 +287,35 @@ export default function ProductDetailClient({
           )}
         </div>
 
-        {/* Product Info */}
+        {/* Product Info - Right */}
         <div className="space-y-6">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gaming-textMuted">
-            <span className="hover:text-neon-cyan cursor-pointer transition-colors">
+          <div className="flex items-center gap-2 text-sm text-gaming-textMuted flex-wrap">
+            <Link href="/" className="hover:text-neon-cyan transition-colors">
               Home
-            </span>
+            </Link>
             <span>/</span>
-            <span className="hover:text-neon-cyan cursor-pointer transition-colors">
-              {categoryName}
-            </span>
+            <Link
+              href="/categories"
+              className="hover:text-neon-cyan transition-colors"
+            >
+              Shop
+            </Link>
+            {categoryName && (
+              <>
+                <span>/</span>
+                <Link
+                  href={`/categories?category=${typeof product.category === "object" ? product.category._id : ""}`}
+                  className="hover:text-neon-cyan transition-colors"
+                >
+                  {categoryName}
+                </Link>
+              </>
+            )}
             <span>/</span>
-            <span className="text-gaming-text truncate">{product.name}</span>
+            <span className="text-gaming-text truncate max-w-[200px]">
+              {product.name}
+            </span>
           </div>
 
           <div>
@@ -301,70 +397,157 @@ export default function ProductDetailClient({
             </p>
           )}
 
-          {/* Quantity & Add to Cart */}
+          {/* Quantity & Action Buttons */}
           {!product.isOutOfStock && (
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex items-center border border-gaming-border rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-3 text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-all"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="px-6 py-3 text-gaming-text font-medium min-w-[60px] text-center">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() =>
-                    setQuantity(Math.min(product.stockQuantity, quantity + 1))
-                  }
-                  className="px-4 py-3 text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
+            <div className="space-y-4">
+              {/* Quantity Selector */}
+              <div className="flex items-center gap-4">
+                <span className="text-gaming-text text-sm font-medium">Quantity:</span>
+                <div className="flex items-center border border-gaming-border rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="px-4 py-3 text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-all"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="px-6 py-3 text-gaming-text font-medium min-w-[60px] text-center">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setQuantity(Math.min(product.stockQuantity, quantity + 1))
+                    }
+                    className="px-4 py-3 text-gaming-textMuted hover:text-neon-cyan hover:bg-white/5 transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              <motion.button
-                onClick={handleAddToCart}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="btn-primary flex-1 flex items-center justify-center gap-2 py-3"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                Add to Cart
-              </motion.button>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <motion.button
+                  onClick={handleAddToCart}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2 py-3.5 text-base"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  Add to Cart
+                </motion.button>
 
-              <motion.button
-                onClick={handleWishlist}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`p-3 rounded-lg border transition-all duration-200 ${
-                  inWishlist
-                    ? "bg-neon-pink text-white border-neon-pink"
-                    : "border-gaming-border text-gaming-textMuted hover:border-neon-pink hover:text-neon-pink"
-                }`}
-              >
-                <Heart
-                  className="w-5 h-5"
-                  fill={inWishlist ? "currentColor" : "none"}
-                />
-              </motion.button>
+                <motion.button
+                  onClick={handleBuyNow}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 flex items-center justify-center gap-2 py-3.5 text-base font-semibold rounded-lg bg-gradient-to-r from-neon-pink to-purple-600 text-white hover:from-neon-pink/90 hover:to-purple-600/90 transition-all shadow-[0_0_20px_rgba(255,0,100,0.3)] hover:shadow-[0_0_30px_rgba(255,0,100,0.5)]"
+                >
+                  <Zap className="w-5 h-5" />
+                  Buy It Now
+                </motion.button>
+              </div>
 
-              <button className="p-3 rounded-lg border border-gaming-border text-gaming-textMuted hover:border-neon-cyan hover:text-neon-cyan transition-all">
-                <Share2 className="w-5 h-5" />
-              </button>
+              {/* Wishlist & Share */}
+              <div className="flex gap-3">
+                <motion.button
+                  onClick={handleWishlist}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all duration-200 text-sm ${
+                    inWishlist
+                      ? "bg-neon-pink text-white border-neon-pink"
+                      : "border-gaming-border text-gaming-textMuted hover:border-neon-pink hover:text-neon-pink"
+                  }`}
+                >
+                  <Heart
+                    className="w-4 h-4"
+                    fill={inWishlist ? "currentColor" : "none"}
+                  />
+                  {inWishlist ? "In Wishlist" : "Add to Wishlist"}
+                </motion.button>
+
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gaming-border text-gaming-textMuted hover:border-neon-cyan hover:text-neon-cyan transition-all text-sm"
+                  title="Copy link"
+                >
+                  <Copy className="w-4 h-4" />
+                  Share
+                </button>
+              </div>
             </div>
           )}
 
           {product.isOutOfStock && (
-            <div className="flex gap-3">
-              <motion.button
-                onClick={handleWishlist}
-                className="btn-secondary flex items-center gap-2 flex-1 justify-center"
-              >
-                <Heart className="w-5 h-5" />
-                {inWishlist ? "In Wishlist" : "Add to Wishlist"}
-              </motion.button>
+            <div className="p-4 rounded-xl border border-gaming-border bg-gaming-surface/50">
+              {notifyDone ? (
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-neon-green/10">
+                    <Check className="w-5 h-5 text-neon-green" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white text-sm">You're on the list!</p>
+                    <p className="text-gaming-textMuted text-xs mt-1">
+                      We'll email you at <span className="text-neon-cyan">{notifyEmail}</span> when this
+                      item is {notifyType === "back_in_stock" ? "back in stock" : "on sale"}.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Bell className="w-4 h-4 text-neon-pink" />
+                    <p className="text-sm font-semibold text-white">
+                      Out of stock — get notified
+                    </p>
+                  </div>
+                  <div className="flex gap-2 mb-3">
+                    {(["back_in_stock", "price_drop"] as const).map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setNotifyType(t)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                          notifyType === t
+                            ? "border-neon-pink bg-neon-pink/10 text-neon-pink"
+                            : "border-gaming-border text-gaming-textMuted hover:text-white"
+                        }`}
+                      >
+                        {t === "back_in_stock" ? "Back in stock" : "Price drop"}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="flex-1 px-3 py-2.5 rounded-lg bg-gaming-dark border border-gaming-border text-white text-sm placeholder:text-gaming-textMuted focus:outline-none focus:border-neon-cyan"
+                    />
+                    <button
+                      onClick={handleNotify}
+                      disabled={notifyLoading}
+                      className="px-4 py-2.5 rounded-lg bg-neon-pink text-white text-sm font-medium hover:bg-neon-pink/90 disabled:opacity-50 transition-all flex items-center gap-2"
+                    >
+                      {notifyLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Mail className="w-4 h-4" />
+                      )}
+                      Notify Me
+                    </button>
+                  </div>
+                </>
+              )}
+              <div className="flex mt-4 pt-3 border-t border-gaming-border">
+                <motion.button
+                  onClick={handleWishlist}
+                  className="flex items-center gap-2 text-gaming-textMuted hover:text-neon-pink transition-colors text-sm"
+                >
+                  <Heart className={`w-4 h-4 ${inWishlist ? "fill-neon-pink text-neon-pink" : ""}`} />
+                  {inWishlist ? "In Wishlist" : "Add to Wishlist"}
+                </motion.button>
+              </div>
             </div>
           )}
 
@@ -386,12 +569,12 @@ export default function ProductDetailClient({
 
       {/* Tabs Section */}
       <div className="mt-16">
-        <div className="flex gap-6 border-b border-gaming-border mb-8 overflow-x-auto">
+        <div className="flex gap-6 border-b border-gaming-border mb-8 overflow-x-auto scrollbar-hide">
           {(["description", "specs", "reviews"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-4 text-sm font-medium capitalize transition-all duration-200 relative ${
+              className={`pb-4 text-sm font-medium capitalize transition-all duration-200 relative whitespace-nowrap ${
                 activeTab === tab
                   ? "text-neon-cyan"
                   : "text-gaming-textMuted hover:text-gaming-text"
@@ -528,6 +711,23 @@ export default function ProductDetailClient({
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-16">
+          <div className="flex items-center gap-3 mb-8">
+            <Eye className="w-6 h-6 text-neon-cyan" />
+            <h2 className="text-2xl font-bold text-white">
+              You May Also <span className="text-neon-cyan">Like</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedProducts.map((relatedProduct) => (
+              <ProductCard key={relatedProduct._id} product={relatedProduct} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -79,8 +79,10 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("Registration error:", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to create account";
     return NextResponse.json(
-      { error: "Failed to create account" },
+      { error: message },
       { status: 500 }
     );
   }

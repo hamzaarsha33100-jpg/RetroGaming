@@ -7,7 +7,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
-  ShoppingCart, Search, Menu, X, User, Heart, ChevronDown, LogOut,
+  ShoppingCart, Menu, X, User, Heart, ChevronDown, LogOut,
   Package, Settings, Zap, ChevronRight, Monitor, Tv,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
@@ -77,7 +77,7 @@ export default function Navbar() {
   const { getItemCount } = useCartStore();
   const { items: wishlistItems } = useWishlistStore();
   const hasMounted = useHasMounted();
-  const { toggleCart, toggleSearch, toggleMobileMenu, isMobileMenuOpen } = useUIStore();
+  const { toggleCart, toggleMobileMenu, isMobileMenuOpen } = useUIStore();
 
   const [psCategories, setPsCategories] = useState<{ href: string; label: string }[]>([]);
   const [xboxCategories, setXboxCategories] = useState<{ href: string; label: string }[]>([]);
@@ -237,13 +237,6 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Desktop Search Bar */}
-            <button onClick={toggleSearch} className="hidden lg:flex items-center gap-2 px-4 py-2 rounded-full bg-gaming-surface/50 border border-gaming-border text-gaming-textMuted hover:border-neon-cyan/50 hover:text-gaming-text transition-all duration-300 text-sm min-w-[200px]">
-              <Search className="w-4 h-4" />
-              <span>{t("nav.search")}</span>
-              <kbd className="ml-auto text-xs border border-gaming-border rounded px-1.5 py-0.5 bg-gaming-dark/50">/</kbd>
-            </button>
-
             {/* Right Actions */}
             <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
               <div className="hidden lg:block">
@@ -252,10 +245,6 @@ export default function Navbar() {
               <div className="hidden lg:block">
                 <LanguageSelector />
               </div>
-              <button onClick={toggleSearch} className="lg:hidden p-2 text-gaming-textMuted hover:text-neon-cyan transition-colors" aria-label="Search">
-                <Search className="w-5 h-5" />
-              </button>
-
               <Link href="/account/wishlist" className="relative p-2 text-gaming-textMuted hover:text-neon-pink transition-colors" aria-label="Wishlist">
                 <Heart className="w-5 h-5" />
                 {wishlistCount > 0 && (

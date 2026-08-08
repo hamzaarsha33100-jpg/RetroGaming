@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -27,8 +27,6 @@ const signupSchema = z
     path: ["confirmPassword"],
   });
 
-const googleAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true";
-
 type SignupForm = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
@@ -37,6 +35,14 @@ export default function SignupPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleAvailable, setGoogleAvailable] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/providers")
+      .then((res) => res.json())
+      .then((data) => setGoogleAvailable(Boolean(data?.google)))
+      .catch(() => setGoogleAvailable(false));
+  }, []);
 
   const {
     register,
@@ -112,7 +118,7 @@ export default function SignupPage() {
           </p>
         </div>
 
-        {googleAuthEnabled && (
+        {googleAvailable && (
           <>
             <motion.button
               onClick={handleGoogleSignIn}

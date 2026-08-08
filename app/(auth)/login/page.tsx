@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -16,8 +16,6 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-const googleAuthEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true";
-
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
@@ -25,6 +23,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleAvailable, setGoogleAvailable] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/providers")
+      .then((res) => res.json())
+      .then((data) => setGoogleAvailable(Boolean(data?.google)))
+      .catch(() => setGoogleAvailable(false));
+  }, []);
 
   const {
     register,
@@ -94,7 +100,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {googleAuthEnabled && (
+        {googleAvailable && (
           <>
             <motion.button
               onClick={handleGoogleSignIn}

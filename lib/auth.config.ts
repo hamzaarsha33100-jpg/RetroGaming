@@ -14,6 +14,7 @@ export const authConfig = {
     strategy: "jwt",
   },
   secret: authSecret,
+  trustHost: true,
   providers: [],
   callbacks: {
     async jwt({ token, user }) {
